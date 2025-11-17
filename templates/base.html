@@ -135,7 +135,7 @@
             color: white !important;
         }
         
-        /* Deus Brainrot - Arco-íris animado */
+        /* Deus Brainrot - Arco-íris animado como onda da direita para esquerda */
         .raridade-deus-brainrot {
             background: linear-gradient(90deg, 
                 #ff0000 0%, 
@@ -146,8 +146,9 @@
                 #4b0082 70%, 
                 #9400d3 84%, 
                 #ff0000 100%);
-            background-size: 400% 400%;
-            animation: rainbow-wave 3s linear infinite;
+            background-size: 200% 100%;
+            background-position: 100% 0%;
+            animation: rainbow-wave-left 2s linear infinite;
             color: white !important;
             font-weight: bold;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
@@ -158,9 +159,9 @@
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
         
-        @keyframes rainbow-wave {
-            0% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        @keyframes rainbow-wave-left {
+            0% { background-position: 100% 0%; }
+            100% { background-position: 0% 0%; }
         }
         
         /* Secreto - Preto com listra branca animada */
@@ -275,17 +276,17 @@
                 #4b0082 70%, 
                 #9400d3 84%, 
                 #ff0000 100%);
-            background-size: 400% 400%;
-            background-position: 0% 50%;
-            animation: rainbow-border-wave 3s linear infinite;
+            background-size: 200% 100%;
+            background-position: 100% 0%;
+            animation: rainbow-border-wave-left 2s linear infinite;
             border-radius: inherit;
             z-index: -1;
             pointer-events: none;
         }
         
-        @keyframes rainbow-border-wave {
-            0% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        @keyframes rainbow-border-wave-left {
+            0% { background-position: 100% 0%; }
+            100% { background-position: 0% 0%; }
         }
         
         /* Secreto - Borda preta com listra branca animada */
