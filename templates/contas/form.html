@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}{% if conta %}Editar{% else %}Nova{% endif %} Conta - Brainrot Manager{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="max-w-2xl mx-auto">
+        <div class="mb-6">
+            <a href="{{ url_for('contas_list') }}" class="text-white hover:text-yellow-200 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Voltar
+            </a>
+        </div>
+        
+        <div class="card rounded-xl shadow-xl p-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-user mr-3 text-blue-600"></i>
+                {% if conta %}Editar Conta{% else %}Nova Conta{% endif %}
+            </h1>
+            
+            <form id="conta-form" class="space-y-6">
+                <!-- Nome -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
+                    <input type="text" id="nome" name="nome" required
+                           value="{{ conta.nome if conta else '' }}"
+                           class="input-modern w-full px-4 py-3 rounded-lg focus:outline-none"
+                           placeholder="Nome da Conta">
+                </div>
+                
+                <!-- Roblox ID -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Roblox ID (Opcional)</label>
+                    <input type="text" id="roblox_id" name="roblox_id"
+                           value="{{ conta.roblox_id if conta else '' }}"
+                           class="input-modern w-full px-4 py-3 rounded-lg focus:outline-none"
+                           placeholder="ID do Roblox">
+                </div>
+                
+                <!-- Brainrots Associados -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Brainrots Associados</label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-4">
+                        {% for brainrot in brainrots %}
+                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="brainrots" value="{{ brainrot.id }}"
+                                   {% if brainrot.id in brainrots_associados %}checked{% endif %}
+                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm text-gray-700">{{ brainrot.nome }}</span>
+                        </label>
+                        {% endfor %}
+                        {% if not brainrots %}
+                        <p class="text-gray-500 text-sm col-span-3 text-center py-4">
+                            Nenhum Brainrot cadastrado ainda. 
+                            <a href="{{ url_for('brainrot_new') }}" class="text-blue-600 hover:underline">Criar um Brainrot</a>
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Botões -->
+                <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <a href="{{ url_for('contas_list') }}" 
+                       class="px-6 py-3 rounded-lg font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn-primary text-white px-6 py-3 rounded-lg font-medium">
+                        <i class="fas fa-save mr-2"></i>Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const contaId = {{ conta.id if conta else 'null' }};
+    
+    // Submit do formulário
+    $('#conta-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        const dados = {
+            nome: $('#nome').val(),
+            roblox_id: $('#roblox_id').val() || '',
+            brainrots: $('input[name="brainrots"]:checked').map(function() {
+                return parseInt($(this).val());
+            }).get()
+        };
+        
+        const url = contaId ? `/api/contas/${contaId}` : '/api/contas';
+        const method = contaId ? 'PUT' : 'POST';
+        
+        $.ajax({
+            url: url,
+            type: method,
+            contentType: 'application/json',
+            data: JSON.stringify(dados),
+            success: function(response) {
+                if (response.success) {
+                    window.location.href = '/contas';
+                }
+            },
+            error: function(xhr) {
+                console.error('Erro ao salvar Conta:', xhr);
+                let errorMsg = 'Erro ao salvar Conta.';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg += '\n\nErro: ' + xhr.responseJSON.error;
+                } else if (xhr.status === 0) {
+                    errorMsg += '\n\nErro: Não foi possível conectar ao servidor. Verifique se o servidor está rodando.';
+                } else if (xhr.status === 500) {
+                    errorMsg += '\n\nErro: Erro interno do servidor. Verifique o terminal do servidor para mais detalhes.';
+                } else {
+                    errorMsg += '\n\nStatus: ' + xhr.status + '\nResposta: ' + xhr.responseText;
+                }
+                alert(errorMsg);
+            }
+        });
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Brainrot Manager{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Garantir que cards com bordas animadas mantenham o fundo */
+        [class*="card-raridade-"] {
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        /* Cores básicas das raridades - aplicadas ao background e ao texto */
+        .raridade-comum { 
+            background-color: #22c55e; 
+            color: white !important; 
+        }
+        .raridade-comum,
+        .raridade-comum *,
+        .raridade-comum span {
+            color: white !important;
+        }
+        
+        .raridade-raro { 
+            background-color: #3b82f6; 
+            color: white !important; 
+        }
+        .raridade-raro,
+        .raridade-raro *,
+        .raridade-raro span {
+            color: white !important;
+        }
+        
+        .raridade-epico { 
+            background-color: #a855f7; 
+            color: white !important; 
+        }
+        .raridade-epico,
+        .raridade-epico *,
+        .raridade-epico span {
+            color: white !important;
+        }
+        
+        .raridade-lendario { 
+            background-color: #fbbf24; 
+            color: white !important; 
+        }
+        .raridade-lendario,
+        .raridade-lendario *,
+        .raridade-lendario span {
+            color: white !important;
+        }
+        
+        .raridade-mitico { 
+            background-color: #ef4444; 
+            color: white !important; 
+        }
+        .raridade-mitico,
+        .raridade-mitico *,
+        .raridade-mitico span {
+            color: white !important;
+        }
+        
+        /* Deus Brainrot - Arco-íris animado */
+        .raridade-deus-brainrot {
+            background: linear-gradient(90deg, 
+                #ff0000 0%, 
+                #ff7f00 14%, 
+                #ffff00 28%, 
+                #00ff00 42%, 
+                #0000ff 56%, 
+                #4b0082 70%, 
+                #9400d3 84%, 
+                #ff0000 100%);
+            background-size: 400% 400%;
+            animation: rainbow-wave 3s ease infinite;
+            color: white !important;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .raridade-deus-brainrot *,
+        .raridade-deus-brainrot span {
+            color: white !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        @keyframes rainbow-wave {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Secreto - Preto com listra branca animada */
+        .raridade-secreto {
+            background: linear-gradient(90deg, 
+                #000000 0%, 
+                #000000 45%, 
+                #ffffff 50%, 
+                #ffffff 55%, 
+                #000000 100%);
+            background-size: 200% 100%;
+            animation: white-stripe 2s ease-in-out infinite;
+            color: white !important;
+            font-weight: bold;
+            position: relative;
+        }
+        .raridade-secreto *,
+        .raridade-secreto span {
+            color: white !important;
+            font-weight: bold;
+        }
+        
+        @keyframes white-stripe {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        /* OG - Amarelo com listra preta animada */
+        .raridade-og {
+            background: linear-gradient(90deg, 
+                #fbbf24 0%, 
+                #fbbf24 45%, 
+                #000000 50%, 
+                #000000 55%, 
+                #fbbf24 100%);
+            background-size: 200% 100%;
+            animation: black-stripe 2s ease-in-out infinite;
+            color: #000000 !important;
+            font-weight: bold;
+            text-shadow: 0 0 3px rgba(255,255,255,0.8);
+            position: relative;
+        }
+        .raridade-og *,
+        .raridade-og span {
+            color: #000000 !important;
+            font-weight: bold;
+            text-shadow: 0 0 3px rgba(255,255,255,0.8);
+        }
+        
+        @keyframes black-stripe {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        .input-modern {
+            transition: all 0.3s ease;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .input-modern:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .navbar-gradient {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Bordas dos cards por raridade */
+        .card-raridade-comum {
+            border: 3px solid #22c55e;
+        }
+        
+        .card-raridade-raro {
+            border: 3px solid #3b82f6;
+        }
+        
+        .card-raridade-epico {
+            border: 3px solid #a855f7;
+        }
+        
+        .card-raridade-lendario {
+            border: 3px solid #fbbf24;
+        }
+        
+        .card-raridade-mitico {
+            border: 3px solid #ef4444;
+        }
+        
+        /* Deus Brainrot - Borda com arco-íris animado */
+        .card-raridade-deus-brainrot {
+            border: 3px solid transparent;
+            position: relative;
+            background-clip: padding-box;
+        }
+        
+        .card-raridade-deus-brainrot::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            background: linear-gradient(90deg, 
+                #ff0000 0%, 
+                #ff7f00 14%, 
+                #ffff00 28%, 
+                #00ff00 42%, 
+                #0000ff 56%, 
+                #4b0082 70%, 
+                #9400d3 84%, 
+                #ff0000 100%);
+            background-size: 400% 400%;
+            animation: rainbow-border 3s ease infinite;
+            border-radius: inherit;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        @keyframes rainbow-border {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Secreto - Borda preta com listra branca animada */
+        .card-raridade-secreto {
+            border: 3px solid #000000;
+            position: relative;
+        }
+        
+        .card-raridade-secreto::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                transparent 45%, 
+                #ffffff 50%, 
+                #ffffff 55%, 
+                transparent 100%);
+            background-size: 200% 100%;
+            animation: white-stripe-border 2s ease-in-out infinite;
+            border-radius: inherit;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        @keyframes white-stripe-border {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        /* OG - Borda amarela com listra preta animada */
+        .card-raridade-og {
+            border: 3px solid #fbbf24;
+            position: relative;
+        }
+        
+        .card-raridade-og::before {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                transparent 45%, 
+                #000000 50%, 
+                #000000 55%, 
+                transparent 100%);
+            background-size: 200% 100%;
+            animation: black-stripe-border 2s ease-in-out infinite;
+            border-radius: inherit;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        @keyframes black-stripe-border {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
+    
+    <script>
+        // Função para formatar valores por segundo (B/M/K)
+        function formatarValorPorSegundo(valor) {
+            if (valor >= 1000000000) {
+                // Bilhão
+                const bilhoes = valor / 1000000000;
+                return '$' + bilhoes.toFixed(1) + 'B/s';
+            } else if (valor >= 1000000) {
+                // Milhão
+                const milhoes = valor / 1000000;
+                return '$' + milhoes.toFixed(1) + 'M/s';
+            } else if (valor >= 1000) {
+                // Mil
+                const mil = valor / 1000;
+                return '$' + mil.toFixed(1) + 'K/s';
+            } else {
+                // Menor que 1000
+                return '$' + valor.toFixed(0) + '/s';
+            }
+        }
+    </script>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar-gradient text-white py-4 mb-8">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-brain text-3xl"></i>
+                    <h1 class="text-2xl font-bold">Brainrot Manager</h1>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="{{ url_for('index') }}" class="hover:text-yellow-200 transition-colors">
+                        <i class="fas fa-home mr-2"></i>Home
+                    </a>
+                    <a href="{{ url_for('brainrots_list') }}" class="hover:text-yellow-200 transition-colors">
+                        <i class="fas fa-cube mr-2"></i>Brainrots
+                    </a>
+                    <a href="{{ url_for('contas_list') }}" class="hover:text-yellow-200 transition-colors">
+                        <i class="fas fa-users mr-2"></i>Contas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Conteúdo Principal -->
+    <main class="container mx-auto px-4 pb-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6">
+                    {% for category, message in messages %}
+                        <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg mb-4 fade-in animate__animated animate__fadeInDown">
+                            <i class="fas fa-check-circle mr-2"></i>{{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="text-center text-white py-6 mt-12">
+        <p class="opacity-75">© 2024 Brainrot Manager - Gerenciamento de Roblox Steal a Brainrot</p>
+    </footer>
+    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

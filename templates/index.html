@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Brainrot Manager{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Cards de Estatísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Total de Contas -->
+        <div class="card rounded-xl shadow-xl p-6 animate__animated animate__fadeInUp" style="animation-delay: 0.1s">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium mb-1">Total de Contas</p>
+                    <h2 class="text-4xl font-bold text-gray-800">{{ total_contas }}</h2>
+                </div>
+                <div class="bg-blue-100 p-4 rounded-full">
+                    <i class="fas fa-users text-3xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total de Brainrots -->
+        <div class="card rounded-xl shadow-xl p-6 animate__animated animate__fadeInUp" style="animation-delay: 0.2s">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium mb-1">Total de Brainrots</p>
+                    <h2 class="text-4xl font-bold text-gray-800">{{ total_brainrots }}</h2>
+                </div>
+                <div class="bg-purple-100 p-4 rounded-full">
+                    <i class="fas fa-cube text-3xl text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Valor Total por Segundo -->
+        <div class="card rounded-xl shadow-xl p-6 animate__animated animate__fadeInUp" style="animation-delay: 0.3s">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium mb-1">Valor Total/s</p>
+                    <h2 class="text-4xl font-bold text-gray-800">{{ "%.2f"|format(valor_total_por_segundo) }}</h2>
+                </div>
+                <div class="bg-green-100 p-4 rounded-full">
+                    <i class="fas fa-coins text-3xl text-green-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botões de Ação Rápida -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <a href="{{ url_for('brainrot_new') }}" class="card rounded-xl shadow-xl p-6 text-center btn-primary text-white hover:no-underline animate__animated animate__fadeInLeft">
+            <i class="fas fa-plus-circle text-4xl mb-3"></i>
+            <h3 class="text-xl font-bold mb-2">Novo Brainrot</h3>
+            <p class="opacity-90">Adicione um novo Brainrot à sua coleção</p>
+        </a>
+        
+        <a href="{{ url_for('conta_new') }}" class="card rounded-xl shadow-xl p-6 text-center btn-primary text-white hover:no-underline animate__animated animate__fadeInRight">
+            <i class="fas fa-user-plus text-4xl mb-3"></i>
+            <h3 class="text-xl font-bold mb-2">Nova Conta</h3>
+            <p class="opacity-90">Cadastre uma nova conta Roblox</p>
+        </a>
+    </div>
+    
+    <!-- Brainrots Recentes -->
+    {% if brainrots_recentes %}
+    <div class="card rounded-xl shadow-xl p-6 animate__animated animate__fadeInUp" style="animation-delay: 0.4s">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">
+                <i class="fas fa-clock mr-2 text-purple-600"></i>Brainrots Recentes
+            </h2>
+            <a href="{{ url_for('brainrots_list') }}" class="text-purple-600 hover:text-purple-700 font-medium">
+                Ver Todos <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for brainrot in brainrots_recentes %}
+            <div class="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-all duration-300 card-raridade-{{ brainrot.raridade.lower().replace(' ', '-') }}">
+                <div class="flex items-start space-x-4">
+                    {% if brainrot.foto %}
+                    <img src="{{ url_for('uploaded_file', filename=brainrot.foto.split('/')[-1]) }}" 
+                         alt="{{ brainrot.nome }}" 
+                         class="w-24 h-24 object-cover rounded-lg">
+                    {% else %}
+                    <div class="w-24 h-24 bg-gray-300 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-cube text-gray-500 text-xl"></i>
+                    </div>
+                    {% endif %}
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-800 mb-1">{{ brainrot.nome }}</h3>
+                        <span class="inline-block px-2 py-1 rounded text-xs font-medium raridade-{{ brainrot.raridade.lower().replace(' ', '-') }}">
+                            {{ brainrot.raridade }}
+                        </span>
+                        <p class="text-sm text-gray-600 mt-1">
+                            <i class="fas fa-coins text-yellow-500 mr-1"></i>{{ brainrot.valor_formatado if brainrot.valor_formatado else ('$' + (brainrot.valor_por_segundo | string) + '/s') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

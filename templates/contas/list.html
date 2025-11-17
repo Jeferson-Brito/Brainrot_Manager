@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Contas - Brainrot Manager{% endblock %}
+
+{% block extra_css %}
+<style>
+    .conta-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .conta-card:hover {
+        transform: scale(1.02);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Cabeçalho -->
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-bold text-white">
+            <i class="fas fa-users mr-3"></i>Gerenciar Contas
+        </h1>
+        <a href="{{ url_for('conta_new') }}" class="btn-primary text-white px-6 py-3 rounded-lg font-medium hover:no-underline">
+            <i class="fas fa-plus mr-2"></i>Nova Conta
+        </a>
+    </div>
+    
+    <!-- Lista de Contas -->
+    <div id="contas-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- As contas serão carregadas via JavaScript -->
+    </div>
+    
+    <!-- Loading -->
+    <div id="loading" class="text-center py-12">
+        <i class="fas fa-spinner fa-spin text-4xl text-white"></i>
+        <p class="text-white mt-4">Carregando Contas...</p>
+    </div>
+    
+    <!-- Empty State -->
+    <div id="empty-state" class="hidden card rounded-xl shadow-xl p-12 text-center">
+        <i class="fas fa-users text-6xl text-gray-400 mb-4"></i>
+        <h3 class="text-2xl font-bold text-gray-800 mb-2">Nenhuma Conta encontrada</h3>
+        <p class="text-gray-600 mb-6">Comece adicionando sua primeira conta!</p>
+        <a href="{{ url_for('conta_new') }}" class="btn-primary text-white px-6 py-3 rounded-lg font-medium inline-block hover:no-underline">
+            <i class="fas fa-plus mr-2"></i>Criar Conta
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Carregar contas ao iniciar
+    $(document).ready(function() {
+        carregarContas();
+    });
+    
+    function carregarContas() {
+        $('#loading').show();
+        $('#empty-state').addClass('hidden');
+        
+        $.get('/api/contas', function(data) {
+            $('#loading').hide();
+            
+            if (data.length === 0) {
+                $('#contas-container').html('');
+                $('#empty-state').removeClass('hidden');
+                return;
+            }
+            
+            let html = '';
+            data.forEach(function(conta, index) {
+                html += `
+                    <div class="conta-card card rounded-xl shadow-xl p-6 animate__animated animate__fadeInUp" 
+                         style="animation-delay: ${index * 0.1}s"
+                         onclick="window.location.href='/contas/${conta.id}'">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="bg-blue-100 p-4 rounded-full">
+                                <i class="fas fa-user text-2xl text-blue-600"></i>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="event.stopPropagation(); window.location.href='/contas/${conta.id}/editar'" 
+                                        class="text-blue-600 hover:text-blue-700">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="event.stopPropagation(); deletarConta(${conta.id})" 
+                                        class="text-red-600 hover:text-red-700">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">${conta.nome}</h3>
+                        ${conta.roblox_id ? `<p class="text-sm text-gray-600 mb-1"><i class="fas fa-id-card mr-1"></i>ID: ${conta.roblox_id}</p>` : ''}
+                        <p class="text-sm text-gray-600">
+                            <i class="fas fa-cube mr-1"></i>${conta.total_brainrots} Brainrot${conta.total_brainrots !== 1 ? 's' : ''}
+                        </p>
+                    </div>
+                `;
+            });
+            
+            $('#contas-container').html(html);
+        });
+    }
+    
+    function deletarConta(id) {
+        if (confirm('Tem certeza que deseja excluir esta Conta?')) {
+            $.ajax({
+                url: '/api/contas/' + id,
+                type: 'DELETE',
+                success: function() {
+                    carregarContas();
+                },
+                error: function() {
+                    alert('Erro ao excluir Conta');
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}
+
