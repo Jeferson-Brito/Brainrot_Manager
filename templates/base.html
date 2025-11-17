@@ -147,7 +147,7 @@
                 #9400d3 84%, 
                 #ff0000 100%);
             background-size: 400% 400%;
-            animation: rainbow-wave 3s ease infinite;
+            animation: rainbow-wave 3s linear infinite;
             color: white !important;
             font-weight: bold;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
@@ -159,8 +159,7 @@
         }
         
         @keyframes rainbow-wave {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+            0% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
         
@@ -277,10 +276,16 @@
                 #9400d3 84%, 
                 #ff0000 100%);
             background-size: 400% 400%;
-            animation: rainbow-border 3s ease infinite;
+            background-position: 0% 50%;
+            animation: rainbow-border-wave 3s linear infinite;
             border-radius: inherit;
             z-index: -1;
             pointer-events: none;
+        }
+        
+        @keyframes rainbow-border-wave {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
         
         @keyframes rainbow-border {
@@ -371,7 +376,8 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navbar -->
+    <!-- Navbar (apenas se estiver logado) -->
+    {% if current_user.is_authenticated %}
     <nav class="navbar-gradient text-white py-4 mb-8">
         <div class="container mx-auto px-4">
             <div class="flex items-center justify-between">
@@ -393,6 +399,7 @@
             </div>
         </div>
     </nav>
+    {% endif %}
     
     <!-- Conteúdo Principal -->
     <main class="container mx-auto px-4 pb-8">

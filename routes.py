@@ -358,8 +358,16 @@ def api_brainrot_delete(id):
 @app.route('/api/contas', methods=['GET'])
 @login_required
 def api_contas_list():
-    """API para listar Contas"""
-    contas = Conta.query.all()
+    """API para listar Contas com busca"""
+    busca = request.args.get('busca', '', type=str)
+    
+    query = Conta.query
+    
+    # Aplicar filtro de busca se fornecido
+    if busca:
+        query = query.filter(Conta.nome.ilike(f'%{busca}%'))
+    
+    contas = query.all()
     return jsonify([conta.to_dict() for conta in contas])
 
 @app.route('/api/contas', methods=['POST'])
