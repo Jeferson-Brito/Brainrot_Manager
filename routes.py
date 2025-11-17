@@ -2,7 +2,7 @@ from app import app, db, Brainrot, Conta, CampoPersonalizado, brainrot_conta
 from flask import render_template, request, jsonify, redirect, url_for, flash, send_from_directory
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
-from auth import get_user, ADMIN_EMAIL
+from auth import get_user
 import os
 import json
 from datetime import datetime
