@@ -138,9 +138,29 @@ def api_brainrots_list():
     if conta_id:
         query = query.join(brainrot_conta).filter(brainrot_conta.c.conta_id == conta_id)
     
+    # Ordenar por raridade primeiro, depois por ordem personalizada
+    # Definir ordem de raridades
+    ordem_raridades = {
+        'Comum': 1,
+        'Raro': 2,
+        'Épico': 3,
+        'Lendário': 4,
+        'Mítico': 5,
+        'Deus Brainrot': 6,
+        'Secreto': 7,
+        'OG': 8
+    }
+    
     brainrots = query.all()
     
-    return jsonify([br.to_dict() for br in brainrots])
+    # Ordenar: primeiro por raridade, depois por ordem personalizada
+    brainrots_ordenados = sorted(brainrots, key=lambda br: (
+        ordem_raridades.get(br.raridade, 0),
+        br.ordem,
+        br.data_criacao
+    ))
+    
+    return jsonify([br.to_dict() for br in brainrots_ordenados])
 
 @app.route('/api/brainrots', methods=['POST'])
 def api_brainrot_create():
@@ -236,6 +256,37 @@ def api_brainrot_update(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/brainrots/reorder', methods=['POST'])
+def api_brainrots_reorder():
+    """API para reordenar Brainrots via drag-and-drop"""
+    try:
+        data = request.get_json()
+        brainrot_orders = data.get('orders', [])  # Lista de [{id: 1, ordem: 0}, ...]
+        
+        if not brainrot_orders:
+            return jsonify({'success': False, 'error': 'Nenhuma ordem fornecida'}), 400
+        
+        # Atualizar ordem de cada Brainrot
+        for item in brainrot_orders:
+            brainrot_id = item.get('id')
+            nova_ordem = item.get('ordem', 0)
+            
+            brainrot = Brainrot.query.get(brainrot_id)
+            if brainrot:
+                brainrot.ordem = nova_ordem
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Ordem atualizada com sucesso'})
+        
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        error_msg = str(e)
+        print(f"ERRO ao reordenar Brainrots: {error_msg}")
+        print(traceback.format_exc())
+        return jsonify({'success': False, 'error': error_msg}), 400
 
 @app.route('/api/brainrots/<int:id>', methods=['DELETE'])
 def api_brainrot_delete(id):

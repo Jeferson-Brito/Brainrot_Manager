@@ -25,6 +25,7 @@ def create_models(db):
         valor_formatado = db.Column(db.String(50), default='$0/s')  # Valor formatado (ex: $1.3B/s)
         quantidade = db.Column(db.Integer, default=1)
         numero_mutacoes = db.Column(db.Integer, default=0)
+        ordem = db.Column(db.Integer, default=0)  # Ordem personalizada para arrastar e soltar
         campos_personalizados = db.Column(db.Text)  # JSON com campos dinâmicos
         data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
         data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -49,6 +50,20 @@ def create_models(db):
             else:
                 self.campos_personalizados = json.dumps({})
         
+        def get_raridade_ordem(self):
+            """Retorna a ordem numérica da raridade para ordenação"""
+            ordem_raridades = {
+                'Comum': 1,
+                'Raro': 2,
+                'Épico': 3,
+                'Lendário': 4,
+                'Mítico': 5,
+                'Deus Brainrot': 6,
+                'Secreto': 7,
+                'OG': 8
+            }
+            return ordem_raridades.get(self.raridade, 0)
+        
         def to_dict(self):
             """Converte o Brainrot para dicionário"""
             return {
@@ -60,6 +75,7 @@ def create_models(db):
                 'valor_formatado': self.valor_formatado or f'${self.valor_por_segundo}/s',
                 'quantidade': self.quantidade,
                 'numero_mutacoes': self.numero_mutacoes,
+                'ordem': self.ordem,
                 'campos_personalizados': self.get_campos_personalizados(),
                 'contas': [conta.nome for conta in self.contas.all()],
                 'data_criacao': self.data_criacao.isoformat() if self.data_criacao else None
