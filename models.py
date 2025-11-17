@@ -66,6 +66,12 @@ def create_models(db):
         
         def to_dict(self):
             """Converte o Brainrot para dicionário"""
+            # Tentar obter ordem, se não existir retornar 0
+            try:
+                ordem_valor = self.ordem if hasattr(self, 'ordem') else 0
+            except:
+                ordem_valor = 0
+            
             return {
                 'id': self.id,
                 'nome': self.nome,
@@ -75,7 +81,7 @@ def create_models(db):
                 'valor_formatado': self.valor_formatado or f'${self.valor_por_segundo}/s',
                 'quantidade': self.quantidade,
                 'numero_mutacoes': self.numero_mutacoes,
-                'ordem': self.ordem,
+                'ordem': ordem_valor,
                 'campos_personalizados': self.get_campos_personalizados(),
                 'contas': [conta.nome for conta in self.contas.all()],
                 'data_criacao': self.data_criacao.isoformat() if self.data_criacao else None

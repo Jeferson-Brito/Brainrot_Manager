@@ -156,7 +156,7 @@ def api_brainrots_list():
     # Ordenar: primeiro por raridade, depois por ordem personalizada
     brainrots_ordenados = sorted(brainrots, key=lambda br: (
         ordem_raridades.get(br.raridade, 0),
-        br.ordem,
+        getattr(br, 'ordem', 0),  # Usar getattr para evitar erro se ordem não existir
         br.data_criacao
     ))
     
