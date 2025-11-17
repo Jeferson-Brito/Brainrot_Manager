@@ -44,18 +44,28 @@ from routes import *
 def init_db():
     with app.app_context():
         try:
-            # Primeiro: criar todas as tabelas se não existirem
-            db.create_all()
-            print("✅ Tabelas criadas/verificadas com sucesso!")
-            
-            # Depois: tentar aplicar migrações (se houver novas)
+            # Primeiro: tentar aplicar migrações (isso cria/atualiza tabelas)
             try:
                 from flask_migrate import upgrade
                 upgrade()
-                print("✅ Migrações aplicadas com sucesso!")
+                print("Migracoes aplicadas com sucesso!")
             except Exception as migrate_error:
-                # Ignorar erros de migração (tabelas já podem estar atualizadas)
-                print(f"ℹ️  Migrações: {migrate_error}")
+                print(f"Aviso migracoes: {migrate_error}")
+                # Se migrações falharem, tentar criar tabelas diretamente
+                try:
+                    db.create_all()
+                    # Tentar adicionar coluna ordem manualmente se não existir
+                    try:
+                        from sqlalchemy import text
+                        db.session.execute(text("ALTER TABLE brainrot ADD COLUMN IF NOT EXISTS ordem INTEGER DEFAULT 0"))
+                        db.session.commit()
+                        print("Coluna ordem adicionada com sucesso!")
+                    except Exception as col_error:
+                        print(f"Aviso ao adicionar coluna ordem: {col_error}")
+                        db.session.rollback()
+                    print("Tabelas criadas/verificadas com sucesso!")
+                except Exception as create_error:
+                    print(f"Erro ao criar tabelas: {create_error}")
         except Exception as e:
             print(f"⚠️  Erro ao inicializar banco: {e}")
             import traceback
