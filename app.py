@@ -44,18 +44,22 @@ from routes import *
 def init_db():
     with app.app_context():
         try:
-            # Tentar aplicar migrações primeiro
-            from flask_migrate import upgrade
-            upgrade()
-            print("✅ Migrações aplicadas com sucesso!")
-        except Exception as e:
-            print(f"⚠️  Erro ao aplicar migrações: {e}")
+            # Primeiro: criar todas as tabelas se não existirem
+            db.create_all()
+            print("✅ Tabelas criadas/verificadas com sucesso!")
+            
+            # Depois: tentar aplicar migrações (se houver novas)
             try:
-                # Fallback: criar tabelas diretamente
-                db.create_all()
-                print("✅ Tabelas criadas/verificadas com sucesso!")
-            except Exception as e2:
-                print(f"⚠️  Erro ao criar tabelas: {e2}")
+                from flask_migrate import upgrade
+                upgrade()
+                print("✅ Migrações aplicadas com sucesso!")
+            except Exception as migrate_error:
+                # Ignorar erros de migração (tabelas já podem estar atualizadas)
+                print(f"ℹ️  Migrações: {migrate_error}")
+        except Exception as e:
+            print(f"⚠️  Erro ao inicializar banco: {e}")
+            import traceback
+            traceback.print_exc()
 
 # Inicializar apenas quando não estiver importando (para testes)
 if __name__ != '__main__':
