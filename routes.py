@@ -1,6 +1,8 @@
 from app import app, db, Brainrot, Conta, CampoPersonalizado, brainrot_conta
 from flask import render_template, request, jsonify, redirect, url_for, flash, send_from_directory
+from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
+from auth import get_user, ADMIN_EMAIL
 import os
 import json
 from datetime import datetime
@@ -13,9 +15,41 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# ==================== AUTENTICAÇÃO ====================
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Página de login"""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        
+        user = get_user()
+        if email == user.email and user.check_password(password):
+            login_user(user, remember=True)
+            next_page = request.args.get('next')
+            return redirect(next_page) if next_page else redirect(url_for('index'))
+        else:
+            flash('Email ou senha incorretos!', 'error')
+    
+    # Se já estiver logado, redirecionar para home
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    """Fazer logout"""
+    logout_user()
+    flash('Você foi deslogado com sucesso!', 'info')
+    return redirect(url_for('login'))
+
 # ==================== ROTAS PRINCIPAIS ====================
 
 @app.route('/')
+@login_required
 def index():
     """Página inicial com dashboard"""
     total_contas = Conta.query.count()
@@ -35,11 +69,21 @@ def index():
                          brainrots_recentes=brainrots_recentes)
 
 @app.route('/brainrots')
+@login_required
 def brainrots_list():
     """Lista todos os Brainrots"""
-    return render_template('brainrots/list.html')
+    # Contar brainrots por raridade
+    total_brainrots = Brainrot.query.count()
+    brainrots_por_raridade = {}
+    for raridade in RARIDADES:
+        brainrots_por_raridade[raridade] = Brainrot.query.filter_by(raridade=raridade).count()
+    
+    return render_template('brainrots/list.html', 
+                         total_brainrots=total_brainrots,
+                         brainrots_por_raridade=brainrots_por_raridade)
 
 @app.route('/brainrots/novo')
+@login_required
 def brainrot_new():
     """Página para criar novo Brainrot"""
     contas = Conta.query.all()
@@ -51,6 +95,7 @@ def brainrot_new():
                          raridades=RARIDADES)
 
 @app.route('/brainrots/<int:id>/editar')
+@login_required
 def brainrot_edit(id):
     """Página para editar Brainrot"""
     brainrot = Brainrot.query.get_or_404(id)
@@ -66,11 +111,14 @@ def brainrot_edit(id):
                          raridades=RARIDADES)
 
 @app.route('/contas')
+@login_required
 def contas_list():
     """Lista todas as Contas"""
-    return render_template('contas/list.html')
+    total_contas = Conta.query.count()
+    return render_template('contas/list.html', total_contas=total_contas)
 
 @app.route('/contas/nova')
+@login_required
 def conta_new():
     """Página para criar nova Conta"""
     brainrots = Brainrot.query.all()
@@ -80,6 +128,7 @@ def conta_new():
                          brainrots_associados=[])
 
 @app.route('/contas/<int:id>/editar')
+@login_required
 def conta_edit(id):
     """Página para editar Conta"""
     conta = Conta.query.get_or_404(id)
@@ -92,6 +141,7 @@ def conta_edit(id):
                          brainrots_associados=brainrots_associados)
 
 @app.route('/contas/<int:id>')
+@login_required
 def conta_detail(id):
     """Página de detalhes da Conta"""
     conta = Conta.query.get_or_404(id)
@@ -102,6 +152,7 @@ def conta_detail(id):
 # ==================== API REST ====================
 
 @app.route('/api/brainrots', methods=['GET'])
+@login_required
 def api_brainrots_list():
     """API para listar Brainrots com busca e filtros"""
     # Parâmetros de busca e filtro
@@ -163,6 +214,7 @@ def api_brainrots_list():
     return jsonify([br.to_dict() for br in brainrots_ordenados])
 
 @app.route('/api/brainrots', methods=['POST'])
+@login_required
 def api_brainrot_create():
     """API para criar Brainrot"""
     try:
@@ -215,6 +267,7 @@ def api_brainrot_create():
         return jsonify({'success': False, 'error': error_msg}), 400
 
 @app.route('/api/brainrots/<int:id>', methods=['PUT'])
+@login_required
 def api_brainrot_update(id):
     """API para atualizar Brainrot"""
     try:
@@ -258,6 +311,7 @@ def api_brainrot_update(id):
         return jsonify({'success': False, 'error': str(e)}), 400
 
 @app.route('/api/brainrots/reorder', methods=['POST'])
+@login_required
 def api_brainrots_reorder():
     """API para reordenar Brainrots via drag-and-drop"""
     try:
@@ -289,6 +343,7 @@ def api_brainrots_reorder():
         return jsonify({'success': False, 'error': error_msg}), 400
 
 @app.route('/api/brainrots/<int:id>', methods=['DELETE'])
+@login_required
 def api_brainrot_delete(id):
     """API para deletar Brainrot"""
     try:
@@ -301,19 +356,30 @@ def api_brainrot_delete(id):
         return jsonify({'success': False, 'error': str(e)}), 400
 
 @app.route('/api/contas', methods=['GET'])
+@login_required
 def api_contas_list():
     """API para listar Contas"""
     contas = Conta.query.all()
     return jsonify([conta.to_dict() for conta in contas])
 
 @app.route('/api/contas', methods=['POST'])
+@login_required
 def api_conta_create():
     """API para criar Conta"""
     try:
         data = request.get_json()
+        nome = data.get('nome', '').strip()
+        
+        # Verificar se já existe uma conta com o mesmo nome
+        conta_existente = Conta.query.filter_by(nome=nome).first()
+        if conta_existente:
+            return jsonify({
+                'success': False, 
+                'error': f'Já existe uma conta com o nome "{nome}". Por favor, escolha outro nome.'
+            }), 400
         
         conta = Conta(
-            nome=data.get('nome'),
+            nome=nome,
             roblox_id=data.get('roblox_id', '')
         )
         
@@ -342,13 +408,24 @@ def api_conta_create():
         return jsonify({'success': False, 'error': error_msg}), 400
 
 @app.route('/api/contas/<int:id>', methods=['PUT'])
+@login_required
 def api_conta_update(id):
     """API para atualizar Conta"""
     try:
         conta = Conta.query.get_or_404(id)
         data = request.get_json()
+        novo_nome = data.get('nome', conta.nome).strip()
         
-        conta.nome = data.get('nome', conta.nome)
+        # Verificar se já existe outra conta com o mesmo nome (exceto a atual)
+        if novo_nome != conta.nome:
+            conta_existente = Conta.query.filter_by(nome=novo_nome).first()
+            if conta_existente and conta_existente.id != conta.id:
+                return jsonify({
+                    'success': False, 
+                    'error': f'Já existe uma conta com o nome "{novo_nome}". Por favor, escolha outro nome.'
+                }), 400
+        
+        conta.nome = novo_nome
         conta.roblox_id = data.get('roblox_id', conta.roblox_id)
         
         # Atualizar brainrots
@@ -366,6 +443,7 @@ def api_conta_update(id):
         return jsonify({'success': False, 'error': str(e)}), 400
 
 @app.route('/api/contas/<int:id>', methods=['DELETE'])
+@login_required
 def api_conta_delete(id):
     """API para deletar Conta"""
     try:
@@ -384,6 +462,7 @@ def api_campos_personalizados_list():
     return jsonify([campo.to_dict() for campo in campos])
 
 @app.route('/api/campos-personalizados', methods=['POST'])
+@login_required
 def api_campo_personalizado_create():
     """API para criar campo personalizado"""
     try:
@@ -405,6 +484,7 @@ def api_campo_personalizado_create():
         return jsonify({'success': False, 'error': str(e)}), 400
 
 @app.route('/api/upload', methods=['POST'])
+@login_required
 def upload_file():
     """API para upload de imagens"""
     if 'file' not in request.files:
@@ -430,6 +510,7 @@ def upload_file():
     return jsonify({'success': False, 'error': 'Tipo de arquivo não permitido'}), 400
 
 @app.route('/uploads/<filename>')
+@login_required
 def uploaded_file(filename):
     """Serve arquivos enviados"""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)

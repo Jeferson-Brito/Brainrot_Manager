@@ -416,6 +416,21 @@
         <p class="opacity-75">© 2024 Brainrot Manager - Gerenciamento de Roblox Steal a Brainrot</p>
     </footer>
     
+    <!-- Navbar com Logout (apenas se estiver logado) -->
+    {% if current_user.is_authenticated %}
+    <div class="fixed bottom-4 right-4 z-50">
+        <div class="bg-white/90 backdrop-blur-md rounded-lg shadow-lg p-3 flex items-center space-x-3">
+            <span class="text-sm text-gray-700">
+                <i class="fas fa-user-circle mr-1"></i>{{ current_user.email }}
+            </span>
+            <a href="{{ url_for('logout') }}" 
+               class="text-red-600 hover:text-red-700 text-sm font-medium px-3 py-1 rounded hover:bg-red-50 transition-colors">
+                <i class="fas fa-sign-out-alt mr-1"></i>Sair
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     {% block extra_js %}{% endblock %}

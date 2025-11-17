@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from dotenv import load_dotenv
 import os
 from datetime import datetime
@@ -11,6 +12,13 @@ load_dotenv()
 
 # Inicializar o Flask
 app = Flask(__name__)
+
+# Configurar Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Por favor, faça login para acessar esta página.'
+login_manager.login_message_category = 'info'
 
 # Configurações do banco de dados PostgreSQL
 # Render fornece DATABASE_URL automaticamente
@@ -36,6 +44,16 @@ from models import create_models
 
 # Criar modelos com a instância do db
 brainrot_conta, Brainrot, Conta, CampoPersonalizado = create_models(db)
+
+# Configurar user_loader do Flask-Login
+from auth import get_user
+
+@login_manager.user_loader
+def load_user(user_id):
+    user = get_user()
+    if str(user.id) == str(user_id):
+        return user
+    return None
 
 # Importar rotas (depois de definir os modelos)
 from routes import *
