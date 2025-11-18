@@ -297,14 +297,29 @@ def api_brainrots_list():
     for nome, lista_brainrots in brainrots_por_nome.items():
         if len(lista_brainrots) > 1:
             # Múltiplos brainrots com mesmo nome - criar um resultado com range
-            valores_formatados = [br.valor_formatado or f'${br.valor_por_segundo}/s' for br in lista_brainrots]
+            valores_formatados = []
+            for br in lista_brainrots:
+                if br.valor_formatado:
+                    valores_formatados.append(br.valor_formatado)
+                else:
+                    # Formatar usando valor_por_segundo se não houver valor_formatado
+                    vps = br.valor_por_segundo or 0
+                    if vps >= 1000000000:
+                        valores_formatados.append(f'${vps/1000000000:.1f}B/s')
+                    elif vps >= 1000000:
+                        valores_formatados.append(f'${vps/1000000:.1f}M/s')
+                    elif vps >= 1000:
+                        valores_formatados.append(f'${vps/1000:.1f}K/s')
+                    else:
+                        valores_formatados.append(f'${vps:.0f}/s')
+            
             valor_range = formatar_valor_range(valores_formatados)
             
-            # Usar o primeiro brainrot como base (ou o mais recente)
+            # Usar o primeiro brainrot como base
             brainrot_base = lista_brainrots[0]
             brainrot_dict = brainrot_base.to_dict()
             
-            # Atualizar com range de valores
+            # Atualizar com range de valores (sobrescrever valor_formatado)
             brainrot_dict['valor_range'] = valor_range
             brainrot_dict['tem_multiplos'] = True
             brainrot_dict['total_instancias'] = len(lista_brainrots)
@@ -312,9 +327,22 @@ def api_brainrots_list():
             # Listar todas as instâncias com seus detalhes
             brainrot_dict['instancias'] = []
             for inst in lista_brainrots:
+                inst_valor = inst.valor_formatado
+                if not inst_valor:
+                    # Formatar usando valor_por_segundo
+                    vps = inst.valor_por_segundo or 0
+                    if vps >= 1000000000:
+                        inst_valor = f'${vps/1000000000:.1f}B/s'
+                    elif vps >= 1000000:
+                        inst_valor = f'${vps/1000000:.1f}M/s'
+                    elif vps >= 1000:
+                        inst_valor = f'${vps/1000:.1f}K/s'
+                    else:
+                        inst_valor = f'${vps:.0f}/s'
+                
                 inst_dict = {
                     'id': inst.id,
-                    'valor_formatado': inst.valor_formatado or f'${inst.valor_por_segundo}/s',
+                    'valor_formatado': inst_valor,
                     'numero_mutacoes': inst.numero_mutacoes,
                     'contas': [conta.nome for conta in inst.contas.all()]
                 }
