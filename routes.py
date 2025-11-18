@@ -22,27 +22,30 @@ def parse_valor_formatado(valor_str):
     if not valor_str:
         return 0.0
     
-    # Remover espaços e converter para maiúsculo
-    valor_str = valor_str.strip().upper()
-    
-    # Extrair número
-    match = re.search(r'([\d.]+)', valor_str)
-    if not match:
+    try:
+        # Remover espaços e converter para maiúsculo
+        valor_str = str(valor_str).strip().upper()
+        
+        # Extrair número (pode ter ponto decimal)
+        match = re.search(r'([\d.]+)', valor_str)
+        if not match:
+            return 0.0
+        
+        numero = float(match.group(1))
+        
+        # Multiplicadores baseados no sufixo
+        if 'K' in valor_str:
+            return numero * 1000
+        elif 'M' in valor_str:
+            return numero * 1000000
+        elif 'B' in valor_str:
+            return numero * 1000000000
+        elif 'T' in valor_str:
+            return numero * 1000000000000
+        
+        return numero
+    except (ValueError, AttributeError):
         return 0.0
-    
-    numero = float(match.group(1))
-    
-    # Multiplicadores
-    if 'K' in valor_str:
-        return numero * 1000
-    elif 'M' in valor_str:
-        return numero * 1000000
-    elif 'B' in valor_str:
-        return numero * 1000000000
-    elif 'T' in valor_str:
-        return numero * 1000000000000
-    
-    return numero
 
 def formatar_valor_range(valores_formatados):
     """Recebe uma lista de valores formatados e retorna o range (menor - maior)"""
@@ -55,16 +58,21 @@ def formatar_valor_range(valores_formatados):
     if not valores_numeros:
         return None
     
-    # Encontrar menor e maior
+    # Se houver apenas um valor único (após remover duplicatas)
+    valores_unicos = list(set([v[1] for v in valores_numeros]))
+    if len(valores_unicos) == 1:
+        return valores_unicos[0]
+    
+    # Encontrar menor e maior baseado no valor numérico
     valores_numeros.sort(key=lambda x: x[0])
     menor_formatado = valores_numeros[0][1]
     maior_formatado = valores_numeros[-1][1]
     
-    # Se houver apenas um valor ou todos são iguais
-    if menor_formatado == maior_formatado or len(valores_numeros) == 1:
+    # Se houver apenas um valor ou todos são iguais numericamente
+    if valores_numeros[0][0] == valores_numeros[-1][0]:
         return menor_formatado
     
-    # Retornar range
+    # Retornar range (menor - maior)
     return f"{menor_formatado} - {maior_formatado}"
 
 # ==================== AUTENTICAÇÃO ====================
