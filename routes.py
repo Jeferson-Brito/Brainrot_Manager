@@ -5,7 +5,9 @@ from werkzeug.utils import secure_filename
 from auth import get_user
 import os
 import json
+import re
 from datetime import datetime
+from collections import defaultdict
 
 # Lista de raridades disponíveis
 RARIDADES = ['Comum', 'Raro', 'Épico', 'Lendário', 'Mítico', 'Deus Brainrot', 'Secreto', 'OG']
@@ -14,6 +16,56 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def parse_valor_formatado(valor_str):
+    """Converte valor formatado (ex: $50K/s, $1.5M/s) para número para comparação"""
+    if not valor_str:
+        return 0.0
+    
+    # Remover espaços e converter para maiúsculo
+    valor_str = valor_str.strip().upper()
+    
+    # Extrair número
+    match = re.search(r'([\d.]+)', valor_str)
+    if not match:
+        return 0.0
+    
+    numero = float(match.group(1))
+    
+    # Multiplicadores
+    if 'K' in valor_str:
+        return numero * 1000
+    elif 'M' in valor_str:
+        return numero * 1000000
+    elif 'B' in valor_str:
+        return numero * 1000000000
+    elif 'T' in valor_str:
+        return numero * 1000000000000
+    
+    return numero
+
+def formatar_valor_range(valores_formatados):
+    """Recebe uma lista de valores formatados e retorna o range (menor - maior)"""
+    if not valores_formatados:
+        return None
+    
+    # Converter todos para números
+    valores_numeros = [(parse_valor_formatado(v), v) for v in valores_formatados if v]
+    
+    if not valores_numeros:
+        return None
+    
+    # Encontrar menor e maior
+    valores_numeros.sort(key=lambda x: x[0])
+    menor_formatado = valores_numeros[0][1]
+    maior_formatado = valores_numeros[-1][1]
+    
+    # Se houver apenas um valor ou todos são iguais
+    if menor_formatado == maior_formatado or len(valores_numeros) == 1:
+        return menor_formatado
+    
+    # Retornar range
+    return f"{menor_formatado} - {maior_formatado}"
 
 # ==================== AUTENTICAÇÃO ====================
 
@@ -103,12 +155,28 @@ def brainrot_edit(id):
     contas_associadas = [c.id for c in brainrot.contas.all()]
     contas = Conta.query.all()
     campos_personalizados = CampoPersonalizado.query.all()
+    
+    # Buscar todas as instâncias do brainrot com o mesmo nome (exceto a atual)
+    instancias = Brainrot.query.filter(Brainrot.nome == brainrot.nome, Brainrot.id != brainrot.id).all()
+    
+    # Preparar dados das instâncias para o template
+    instancias_data = []
+    for inst in instancias:
+        instancias_data.append({
+            'id': inst.id,
+            'valor_formatado': inst.valor_formatado or f'${inst.valor_por_segundo}/s',
+            'numero_mutacoes': inst.numero_mutacoes,
+            'contas': [conta.nome for conta in inst.contas.all()],
+            'quantidade': inst.quantidade
+        })
+    
     return render_template('brainrots/form.html',
                          brainrot=brainrot,
                          contas=contas,
                          contas_associadas=contas_associadas,
                          campos_personalizados=campos_personalizados,
-                         raridades=RARIDADES)
+                         raridades=RARIDADES,
+                         instancias=instancias_data)
 
 @app.route('/contas')
 @login_required
@@ -211,7 +279,48 @@ def api_brainrots_list():
         br.data_criacao
     ))
     
-    return jsonify([br.to_dict() for br in brainrots_ordenados])
+    # Agrupar brainrots por nome para calcular ranges de valores
+    brainrots_por_nome = defaultdict(list)
+    for br in brainrots_ordenados:
+        brainrots_por_nome[br.nome].append(br)
+    
+    # Criar lista de resultados agrupados
+    resultados = []
+    for nome, lista_brainrots in brainrots_por_nome.items():
+        if len(lista_brainrots) > 1:
+            # Múltiplos brainrots com mesmo nome - criar um resultado com range
+            valores_formatados = [br.valor_formatado or f'${br.valor_por_segundo}/s' for br in lista_brainrots]
+            valor_range = formatar_valor_range(valores_formatados)
+            
+            # Usar o primeiro brainrot como base (ou o mais recente)
+            brainrot_base = lista_brainrots[0]
+            brainrot_dict = brainrot_base.to_dict()
+            
+            # Atualizar com range de valores
+            brainrot_dict['valor_range'] = valor_range
+            brainrot_dict['tem_multiplos'] = True
+            brainrot_dict['total_instancias'] = len(lista_brainrots)
+            
+            # Listar todas as instâncias com seus detalhes
+            brainrot_dict['instancias'] = []
+            for inst in lista_brainrots:
+                inst_dict = {
+                    'id': inst.id,
+                    'valor_formatado': inst.valor_formatado or f'${inst.valor_por_segundo}/s',
+                    'numero_mutacoes': inst.numero_mutacoes,
+                    'contas': [conta.nome for conta in inst.contas.all()]
+                }
+                brainrot_dict['instancias'].append(inst_dict)
+            
+            resultados.append(brainrot_dict)
+        else:
+            # Apenas um brainrot com esse nome
+            brainrot_dict = lista_brainrots[0].to_dict()
+            brainrot_dict['tem_multiplos'] = False
+            brainrot_dict['total_instancias'] = 1
+            resultados.append(brainrot_dict)
+    
+    return jsonify(resultados)
 
 @app.route('/api/brainrots', methods=['POST'])
 @login_required
