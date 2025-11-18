@@ -33,11 +33,37 @@
     }
     
     .brainrot-card {
+        cursor: pointer;
+    }
+    
+    .modo-organizacao .brainrot-card {
         cursor: grab;
     }
     
-    .brainrot-card:active {
+    .modo-organizacao .brainrot-card:active {
         cursor: grabbing;
+    }
+    
+    .modo-organizacao .brainrot-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .indicador-modo-organizacao {
+        background: #fbbf24;
+        color: #1f2937;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .indicador-modo-organizacao.hidden {
+        display: none;
     }
 </style>
 {% endblock %}
@@ -55,9 +81,15 @@
                     <i class="fas fa-info-circle mr-1"></i>Total de Brainrots: <span class="font-bold text-white">{{ total_brainrots if total_brainrots is defined else 0 }}</span>
                 </p>
             </div>
-            <a href="{{ url_for('brainrot_new') }}" class="btn-primary text-white px-6 py-3 rounded-lg font-medium hover:no-underline">
-                <i class="fas fa-plus mr-2"></i>Novo Brainrot
-            </a>
+            <div class="flex items-center gap-3">
+                <button id="btn-organizar" onclick="toggleModoOrganizacao()" 
+                        class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                    <i class="fas fa-grip-vertical mr-2"></i><span id="texto-btn-organizar">Organizar Cards</span>
+                </button>
+                <a href="{{ url_for('brainrot_new') }}" class="btn-primary text-white px-6 py-3 rounded-lg font-medium hover:no-underline">
+                    <i class="fas fa-plus mr-2"></i>Novo Brainrot
+                </a>
+            </div>
         </div>
         
         <!-- Contadores por Raridade -->
@@ -134,6 +166,12 @@
                 <i class="fas fa-redo mr-2"></i>Limpar
             </button>
         </div>
+    </div>
+    
+    <!-- Indicador de Modo Organização -->
+    <div id="indicador-organizacao" class="indicador-modo-organizacao hidden">
+        <i class="fas fa-info-circle"></i>
+        <span>Modo de organização ativado. Arraste os cards para reorganizá-los.</span>
     </div>
     
     <!-- Lista de Brainrots -->
@@ -246,16 +284,51 @@
             
             $('#brainrots-container').html(html);
             
-            // Inicializar SortableJS para drag-and-drop
-            inicializarSortable();
+            // Inicializar SortableJS para drag-and-drop apenas se o modo de organização estiver ativo
+            if (modoOrganizacaoAtivo) {
+                inicializarSortable();
+            }
         });
     }
     
     // Variável global para rastrear se está arrastando
     window.isDragging = false;
     let sortable = null;
+    let modoOrganizacaoAtivo = false;
+    
+    function toggleModoOrganizacao() {
+        modoOrganizacaoAtivo = !modoOrganizacaoAtivo;
+        
+        if (modoOrganizacaoAtivo) {
+            // Ativar modo de organização
+            $('body').addClass('modo-organizacao');
+            $('#indicador-organizacao').removeClass('hidden');
+            $('#texto-btn-organizar').text('Sair do Modo Organização');
+            $('#btn-organizar').removeClass('bg-yellow-600 hover:bg-yellow-700').addClass('bg-red-600 hover:bg-red-700');
+            
+            // Inicializar SortableJS se ainda não estiver inicializado
+            inicializarSortable();
+        } else {
+            // Desativar modo de organização
+            $('body').removeClass('modo-organizacao');
+            $('#indicador-organizacao').addClass('hidden');
+            $('#texto-btn-organizar').text('Organizar Cards');
+            $('#btn-organizar').removeClass('bg-red-600 hover:bg-red-700').addClass('bg-yellow-600 hover:bg-yellow-700');
+            
+            // Destruir SortableJS
+            if (sortable) {
+                sortable.destroy();
+                sortable = null;
+            }
+        }
+    }
     
     function inicializarSortable() {
+        // Só inicializar se o modo de organização estiver ativo
+        if (!modoOrganizacaoAtivo) {
+            return;
+        }
+        
         const container = document.getElementById('brainrots-container');
         if (!container) return;
         
@@ -269,6 +342,7 @@
             ghostClass: 'sortable-ghost',
             dragClass: 'sortable-drag',
             handle: '.brainrot-card', // Pode arrastar por qualquer parte do card
+            disabled: false, // Habilitar arrastar
             onStart: function(evt) {
                 window.isDragging = true;
             },
