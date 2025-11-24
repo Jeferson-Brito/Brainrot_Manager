@@ -496,7 +496,7 @@
         {% endif %}
     });
     
-    // Função para copiar dados de um brainrot
+    // Função para copiar dados de um brainrot (apenas nome, raridade e imagem)
     function copiarDadosBrainrot(brainrotId) {
         $.get(`/api/brainrots/${brainrotId}/copiar`, function(response) {
             if (response.success) {
@@ -514,44 +514,6 @@
                 if (dados.foto) {
                     $('#foto-url').val(dados.foto);
                     atualizarPreviewImagem(dados.foto);
-                }
-                
-                // Preencher quantidade
-                $('#quantidade').val(dados.quantidade || 1);
-                
-                // Preencher valor formatado
-                if (dados.valor_formatado) {
-                    const match = dados.valor_formatado.match(/\$?([\d.]+)([KMBT]?\/s)/i);
-                    if (match) {
-                        $('#valor_numero').val(match[1]);
-                        $('#valor_formato').val(match[2] || '/s');
-                    }
-                }
-                
-                // Preencher eventos (checkboxes)
-                if (dados.eventos && dados.eventos.length > 0) {
-                    dados.eventos.forEach(function(evento) {
-                        $(`input[name="eventos_checkbox"][value="${evento}"]`).prop('checked', true);
-                    });
-                }
-                
-                // Preencher contas
-                if (dados.contas && dados.contas.length > 0) {
-                    // Buscar IDs das contas pelos nomes
-                    const contasNomes = dados.contas;
-                    $('input[name="contas"]').each(function() {
-                        const contaNome = $(this).parent().find('span').text();
-                        if (contasNomes.includes(contaNome)) {
-                            $(this).prop('checked', true);
-                        }
-                    });
-                }
-                
-                // Preencher campos personalizados
-                if (dados.campos_personalizados) {
-                    Object.keys(dados.campos_personalizados).forEach(function(key) {
-                        adicionarCampoPersonalizado(key, dados.campos_personalizados[key]);
-                    });
                 }
                 
                 // Esconder sugestão após copiar
