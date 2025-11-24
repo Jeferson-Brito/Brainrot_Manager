@@ -25,9 +25,15 @@
 <div class="fade-in">
     <div class="max-w-4xl mx-auto">
         <div class="mb-6">
+            {% if conta_pre_selecionada %}
+            <a href="{{ url_for('conta_detail', id=conta_pre_selecionada) }}" class="text-white hover:text-yellow-200 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Voltar para Conta
+            </a>
+            {% else %}
             <a href="{{ url_for('brainrots_list') }}" class="text-white hover:text-yellow-200 transition-colors">
                 <i class="fas fa-arrow-left mr-2"></i>Voltar
             </a>
+            {% endif %}
         </div>
         
         <div class="card rounded-xl shadow-xl p-4 md:p-8">
@@ -421,21 +427,63 @@
             });
         }
         
-        // Sugestão de raridade ao digitar nome (apenas para novos brainrots)
+        // Sugestão de raridade e copiar dados ao digitar nome (apenas para novos brainrots)
         {% if not brainrot %}
+        let buscaTimeout;
+        let brainrotEncontrado = null;
+        
         $('#nome').on('input', function() {
             const nome = $(this).val().trim();
+            
+            // Limpar timeout anterior
+            clearTimeout(buscaTimeout);
+            
+            // Esconder sugestões
+            $('#sugestao-raridade').addClass('hidden');
+            $('#sugestao-copiar').addClass('hidden');
+            brainrotEncontrado = null;
+            
             if (nome.length > 2) {
-                $.get('/api/brainrots/buscar-por-nome', { nome: nome }, function(response) {
-                    if (response.success && response.raridade_sugerida) {
-                        $('#raridade-sugerida').text(response.raridade_sugerida);
-                        $('#sugestao-raridade').removeClass('hidden');
-                    } else {
-                        $('#sugestao-raridade').addClass('hidden');
-                    }
-                });
-            } else {
-                $('#sugestao-raridade').addClass('hidden');
+                // Aguardar um pouco antes de buscar (debounce)
+                buscaTimeout = setTimeout(function() {
+                    // Buscar brainrots com nome similar
+                    $.get('/api/brainrots', { busca: nome }, function(brainrots) {
+                        // Procurar por match exato ou muito similar
+                        const brainrotMatch = brainrots.find(function(br) {
+                            return br.nome.toLowerCase() === nome.toLowerCase() || 
+                                   br.nome.toLowerCase().startsWith(nome.toLowerCase());
+                        });
+                        
+                        if (brainrotMatch) {
+                            brainrotEncontrado = brainrotMatch;
+                            $('#nome-brainrot-encontrado').text(brainrotMatch.nome);
+                            $('#sugestao-copiar').removeClass('hidden');
+                            
+                            // Também buscar raridade sugerida
+                            $.get('/api/brainrots/buscar-por-nome', { nome: nome }, function(response) {
+                                if (response.success && response.raridade_sugerida) {
+                                    $('#raridade-sugerida').text(response.raridade_sugerida);
+                                    $('#sugestao-raridade').removeClass('hidden');
+                                }
+                            });
+                        } else {
+                            // Apenas buscar raridade sugerida
+                            $.get('/api/brainrots/buscar-por-nome', { nome: nome }, function(response) {
+                                if (response.success && response.raridade_sugerida) {
+                                    $('#raridade-sugerida').text(response.raridade_sugerida);
+                                    $('#sugestao-raridade').removeClass('hidden');
+                                }
+                            });
+                        }
+                    });
+                }, 500); // Aguardar 500ms após parar de digitar
+            }
+        });
+        
+        // Copiar dados do brainrot encontrado
+        $('#btn-copiar-sugestao').on('click', function() {
+            if (brainrotEncontrado) {
+                copiarDadosBrainrot(brainrotEncontrado.id);
             }
         });
         
@@ -448,7 +496,72 @@
         {% endif %}
     });
     
-    // Função para copiar dados de outro brainrot
+    // Função para copiar dados de um brainrot
+    function copiarDadosBrainrot(brainrotId) {
+        $.get(`/api/brainrots/${brainrotId}/copiar`, function(response) {
+            if (response.success) {
+                const dados = response.dados;
+                
+                // Preencher nome completo
+                $('#nome').val(dados.nome);
+                
+                // Preencher raridade
+                if (dados.raridade) {
+                    $('#raridade').val(dados.raridade);
+                }
+                
+                // Preencher foto/imagem
+                if (dados.foto) {
+                    $('#foto-url').val(dados.foto);
+                    atualizarPreviewImagem(dados.foto);
+                }
+                
+                // Preencher quantidade
+                $('#quantidade').val(dados.quantidade || 1);
+                
+                // Preencher valor formatado
+                if (dados.valor_formatado) {
+                    const match = dados.valor_formatado.match(/\$?([\d.]+)([KMBT]?\/s)/i);
+                    if (match) {
+                        $('#valor_numero').val(match[1]);
+                        $('#valor_formato').val(match[2] || '/s');
+                    }
+                }
+                
+                // Preencher eventos (checkboxes)
+                if (dados.eventos && dados.eventos.length > 0) {
+                    dados.eventos.forEach(function(evento) {
+                        $(`input[name="eventos_checkbox"][value="${evento}"]`).prop('checked', true);
+                    });
+                }
+                
+                // Preencher contas
+                if (dados.contas && dados.contas.length > 0) {
+                    // Buscar IDs das contas pelos nomes
+                    const contasNomes = dados.contas;
+                    $('input[name="contas"]').each(function() {
+                        const contaNome = $(this).parent().find('span').text();
+                        if (contasNomes.includes(contaNome)) {
+                            $(this).prop('checked', true);
+                        }
+                    });
+                }
+                
+                // Preencher campos personalizados
+                if (dados.campos_personalizados) {
+                    Object.keys(dados.campos_personalizados).forEach(function(key) {
+                        adicionarCampoPersonalizado(key, dados.campos_personalizados[key]);
+                    });
+                }
+                
+                // Esconder sugestão após copiar
+                $('#sugestao-copiar').addClass('hidden');
+                $('#sugestao-raridade').addClass('hidden');
+            }
+        });
+    }
+    
+    // Função para copiar dados de outro brainrot (botão manual)
     {% if not brainrot %}
     $('#btn-copiar-dados').on('click', function() {
         // Buscar brainrots via API
@@ -457,6 +570,11 @@
                 alert('Não há brainrots cadastrados para copiar.');
                 return;
             }
+            
+            // Ordenar por nome
+            brainrots.sort(function(a, b) {
+                return a.nome.localeCompare(b.nome);
+            });
             
             let opcoes = 'Selecione o brainrot para copiar:\n\n';
             brainrots.forEach(function(br, index) {
@@ -470,59 +588,7 @@
                 const brainrotEscolhido = brainrots[indice];
                 
                 if (confirm(`Copiar dados de "${brainrotEscolhido.nome}"?`)) {
-                    $.get(`/api/brainrots/${brainrotEscolhido.id}/copiar`, function(response) {
-                        if (response.success) {
-                            const dados = response.dados;
-                            
-                            // Preencher campos
-                            $('#nome').val(dados.nome);
-                            $('#raridade').val(dados.raridade);
-                            $('#quantidade').val(dados.quantidade || 1);
-                            
-                            // Preencher valor formatado
-                            if (dados.valor_formatado) {
-                                const match = dados.valor_formatado.match(/\$?([\d.]+)([KMBT]?\/s)/i);
-                                if (match) {
-                                    $('#valor_numero').val(match[1]);
-                                    $('#valor_formato').val(match[2] || '/s');
-                                }
-                            }
-                            
-                            // Preencher eventos (checkboxes)
-                            if (dados.eventos && dados.eventos.length > 0) {
-                                dados.eventos.forEach(function(evento) {
-                                    $(`input[name="eventos_checkbox"][value="${evento}"]`).prop('checked', true);
-                                });
-                            }
-                            
-                            // Preencher foto se existir
-                            if (dados.foto) {
-                                $('#foto-url').val(dados.foto);
-                                atualizarPreviewImagem(dados.foto);
-                            }
-                            
-                            // Preencher contas
-                            if (dados.contas && dados.contas.length > 0) {
-                                // Buscar IDs das contas pelos nomes
-                                const contasNomes = dados.contas;
-                                $('input[name="contas"]').each(function() {
-                                    const contaNome = $(this).parent().find('span').text();
-                                    if (contasNomes.includes(contaNome)) {
-                                        $(this).prop('checked', true);
-                                    }
-                                });
-                            }
-                            
-                            // Preencher campos personalizados
-                            if (dados.campos_personalizados) {
-                                Object.keys(dados.campos_personalizados).forEach(function(key) {
-                                    adicionarCampoPersonalizado(key, dados.campos_personalizados[key]);
-                                });
-                            }
-                            
-                            alert('Dados copiados com sucesso!');
-                        }
-                    });
+                    copiarDadosBrainrot(brainrotEscolhido.id);
                 }
             }
         });
@@ -630,7 +696,31 @@
             data: JSON.stringify(dados),
             success: function(response) {
                 if (response.success) {
-                    window.location.href = '/brainrots';
+                    // Verificar se veio de uma conta para redirecionar de volta
+                    const urlParams = new URLSearchParams(window.location.search);
+                    let contaId = urlParams.get('conta_id');
+                    
+                    // Se não encontrou na URL, verificar se foi passado via template
+                    if (!contaId) {
+                        {% if conta_pre_selecionada %}
+                        contaId = {{ conta_pre_selecionada }};
+                        {% endif %}
+                    }
+                    
+                    // Se estiver editando um brainrot existente, verificar se ele tem contas associadas
+                    if (!contaId && brainrotId && response.brainrot && response.brainrot.contas && response.brainrot.contas.length > 0) {
+                        // Se o brainrot tem contas associadas, redirecionar para a primeira conta
+                        // Mas só se não veio de uma página específica
+                        // Por enquanto, vamos para a lista de brainrots mesmo
+                    }
+                    
+                    if (contaId) {
+                        // Redirecionar para a página da conta
+                        window.location.href = '/contas/' + contaId;
+                    } else {
+                        // Redirecionar para a lista de brainrots
+                        window.location.href = '/brainrots';
+                    }
                 }
             },
             error: function(xhr) {

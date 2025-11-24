@@ -164,6 +164,7 @@ def brainrot_new():
                          brainrot=None, 
                          contas=contas,
                          conta_pre_selecionada=conta_id,
+                         conta_id_url=conta_id,  # Para usar no JavaScript
                          campos_personalizados=campos_personalizados,
                          raridades=RARIDADES,
                          eventos=EVENTOS,
@@ -174,6 +175,7 @@ def brainrot_new():
 def brainrot_edit(id):
     """Página para editar Brainrot"""
     brainrot = Brainrot.query.get_or_404(id)
+    conta_id = request.args.get('conta_id', type=int)  # ID da conta se vier da página de detalhes
     # Carregar contas associadas explicitamente
     contas_associadas = [c.id for c in brainrot.contas.all()]
     contas = Conta.query.all()
@@ -198,6 +200,8 @@ def brainrot_edit(id):
                          brainrot=brainrot,
                          contas=contas,
                          contas_associadas=contas_associadas,
+                         conta_pre_selecionada=conta_id,  # Para pré-selecionar a conta
+                         conta_id_url=conta_id,  # Para usar no JavaScript de redirecionamento
                          campos_personalizados=campos_personalizados,
                          raridades=RARIDADES,
                          eventos=EVENTOS,

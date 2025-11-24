@@ -100,7 +100,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for brainrot in brainrots %}
             <div class="brainrot-item bg-gray-50 rounded-lg p-4 cursor-pointer hover:shadow-md transition-all duration-300 card-raridade-{{ brainrot.raridade.lower().replace(' ', '-') }}"
-                 onclick="window.location.href='{{ url_for('brainrot_edit', id=brainrot.id) }}'">
+                 onclick="window.location.href='{{ url_for('brainrot_edit', id=brainrot.id) }}?conta_id={{ conta.id }}'">
                 <div class="flex items-start space-x-4 mb-3">
                     {% if brainrot.foto %}
                         {% if brainrot.foto.startswith('http') %}
@@ -156,7 +156,7 @@
                         </p>
                     </div>
                     <div class="flex gap-2">
-                        <a href="{{ url_for('brainrot_edit', id=brainrot.id) }}" 
+                        <a href="{{ url_for('brainrot_edit', id=brainrot.id) }}?conta_id={{ conta.id }}" 
                            class="text-blue-600 hover:text-blue-700 text-sm font-medium">
                             <i class="fas fa-edit mr-1"></i>Editar
                         </a>
