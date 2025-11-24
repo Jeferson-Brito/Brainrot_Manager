@@ -132,11 +132,26 @@ def index():
     # Brainrots recentes
     brainrots_recentes = Brainrot.query.order_by(Brainrot.data_criacao.desc()).limit(5).all()
     
+    # Top 10 brainrots que mais pagam
+    # Buscar todos os brainrots e ordenar por valor (usando parse_valor_formatado)
+    todos_brainrots = Brainrot.query.all()
+    brainrots_com_valor = []
+    for br in todos_brainrots:
+        valor_num = parse_valor_formatado(br.valor_formatado) if br.valor_formatado else br.valor_por_segundo or 0
+        # Multiplicar pela quantidade para considerar o valor total
+        valor_total = valor_num * (br.quantidade or 1)
+        brainrots_com_valor.append((br, valor_total, valor_num))
+    
+    # Ordenar por valor total (decrescente) e pegar top 10
+    brainrots_com_valor.sort(key=lambda x: x[1], reverse=True)
+    top_10_brainrots = [br[0] for br in brainrots_com_valor[:10]]
+    
     return render_template('index.html',
                          total_contas=total_contas,
                          total_brainrots=total_brainrots,
                          valor_total_por_segundo=valor_total_por_segundo,
-                         brainrots_recentes=brainrots_recentes)
+                         brainrots_recentes=brainrots_recentes,
+                         top_10_brainrots=top_10_brainrots)
 
 @app.route('/brainrots')
 @login_required
