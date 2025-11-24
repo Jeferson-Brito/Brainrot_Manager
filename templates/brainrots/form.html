@@ -126,17 +126,18 @@
                     <!-- Eventos (Mutações) -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Eventos</label>
-                        <select id="eventos" name="eventos" multiple
-                                class="input-modern w-full px-4 py-3 rounded-lg focus:outline-none"
-                                style="min-height: 120px;">
-                            {% for evento in eventos %}
-                            <option value="{{ evento }}" 
-                                    {% if brainrot and evento in brainrot.get_eventos() %}selected{% endif %}>
-                                {{ evento }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        <p class="text-xs text-gray-500 mt-1">Mantenha Ctrl/Cmd pressionado para selecionar múltiplos eventos</p>
+                        <div class="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto bg-white">
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {% for evento in eventos %}
+                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                    <input type="checkbox" name="eventos_checkbox" value="{{ evento }}"
+                                           {% if brainrot and evento in brainrot.get_eventos() %}checked{% endif %}
+                                           class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                    <span class="text-sm text-gray-700">{{ evento }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
                         <!-- Campo oculto para manter compatibilidade -->
                         <input type="hidden" id="numero_mutacoes" name="numero_mutacoes" value="0">
                     </div>
@@ -529,8 +530,11 @@
         const valorFormato = $('#valor_formato').val() || '/s';
         const valorFormatado = '$' + valorNumero + valorFormato;
         
-        // Coletar eventos selecionados
-        const eventosSelecionados = $('#eventos').val() || [];
+        // Coletar eventos selecionados dos checkboxes
+        const eventosSelecionados = [];
+        $('input[name="eventos_checkbox"]:checked').each(function() {
+            eventosSelecionados.push($(this).val());
+        });
         
         const dados = {
             nome: $('#nome').val(),
