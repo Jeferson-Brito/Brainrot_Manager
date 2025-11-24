@@ -68,8 +68,7 @@
                     <input type="url" id="foto-url" name="foto" 
                            value="{{ brainrot.foto if brainrot else '' }}"
                            class="input-modern w-full px-4 py-3 rounded-lg focus:outline-none"
-                           placeholder="https://exemplo.com/imagem.png"
-                           oninput="atualizarPreviewImagem(this.value)">
+                           placeholder="https://exemplo.com/imagem.png">
                     <p class="text-xs text-gray-500 mt-1">
                         <i class="fas fa-info-circle mr-1"></i>
                         Cole o link da imagem do navegador (ex: link de imagens do Roblox, Imgur, etc.)
@@ -80,11 +79,13 @@
                             <img id="preview-image" src="{{ brainrot.foto }}" 
                                  alt="Preview" 
                                  class="max-w-full h-48 w-48 object-cover rounded-lg border-2 border-gray-300 mx-auto"
-                                 onerror="this.style.display='none'; document.getElementById('preview-placeholder').style.display='block';">
+                                 crossorigin="anonymous"
+                                 referrerpolicy="no-referrer">
                             {% else %}
                             <img id="preview-image" src="" alt="Preview" 
                                  class="hidden max-w-full h-48 w-48 object-cover rounded-lg border-2 border-gray-300 mx-auto"
-                                 onerror="this.style.display='none'; document.getElementById('preview-placeholder').style.display='block';">
+                                 crossorigin="anonymous"
+                                 referrerpolicy="no-referrer">
                             {% endif %}
                             <div id="preview-placeholder" class="{% if brainrot and brainrot.foto %}hidden{% endif %} w-48 h-48 bg-gray-200 rounded-lg border-2 border-gray-300 mx-auto flex items-center justify-center">
                                 <div class="text-center">
@@ -314,29 +315,76 @@
         const previewImage = document.getElementById('preview-image');
         const previewPlaceholder = document.getElementById('preview-placeholder');
         
+        if (!previewImage || !previewPlaceholder) {
+            console.error('Elementos de preview não encontrados');
+            return;
+        }
+        
+        // Limpar eventos anteriores
+        previewImage.onload = null;
+        previewImage.onerror = null;
+        
         if (url && url.trim() !== '') {
-            previewImage.src = url;
-            previewImage.classList.remove('hidden');
-            previewPlaceholder.classList.add('hidden');
+            // Mostrar placeholder enquanto carrega
+            previewImage.style.display = 'none';
+            previewPlaceholder.style.display = 'block';
             
-            // Verificar se a imagem carregou com sucesso
-            previewImage.onload = function() {
+            // Tentar carregar a imagem
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.referrerPolicy = 'no-referrer';
+            
+            img.onload = function() {
+                previewImage.src = url;
                 previewImage.style.display = 'block';
                 previewPlaceholder.style.display = 'none';
+                previewImage.classList.remove('hidden');
             };
             
-            previewImage.onerror = function() {
+            img.onerror = function() {
+                console.error('Erro ao carregar imagem:', url);
                 previewImage.style.display = 'none';
                 previewPlaceholder.style.display = 'block';
+                previewImage.classList.add('hidden');
+                
+                // Tentar sem crossorigin se falhar
+                if (img.crossOrigin) {
+                    const img2 = new Image();
+                    img2.onload = function() {
+                        previewImage.src = url;
+                        previewImage.style.display = 'block';
+                        previewPlaceholder.style.display = 'none';
+                        previewImage.classList.remove('hidden');
+                    };
+                    img2.onerror = function() {
+                        previewImage.style.display = 'none';
+                        previewPlaceholder.style.display = 'block';
+                    };
+                    img2.src = url;
+                }
             };
+            
+            img.src = url;
         } else {
             previewImage.classList.add('hidden');
-            previewPlaceholder.classList.remove('hidden');
+            previewImage.style.display = 'none';
+            previewPlaceholder.style.display = 'block';
         }
     }
     
     // Carregar campos personalizados existentes e valor formatado
     $(document).ready(function() {
+        // Listener para atualizar preview de imagem ao digitar URL
+        $('#foto-url').on('input', function() {
+            const url = $(this).val().trim();
+            atualizarPreviewImagem(url);
+        });
+        
+        // Carregar preview se já houver URL
+        {% if brainrot and brainrot.foto %}
+        atualizarPreviewImagem("{{ brainrot.foto }}");
+        {% endif %}
+        
         // Pré-selecionar conta se vier da página de detalhes
         {% if conta_pre_selecionada %}
         $(`input[name="contas"][value="{{ conta_pre_selecionada }}"]`).prop('checked', true);
