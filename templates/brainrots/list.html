@@ -320,10 +320,12 @@
                          style="animation-delay: ${index * 0.05}s"
                          onclick="if (!window.isDragging) window.location.href='${'/brainrots/' + brainrot.id + '/editar'}'">
                         <div class="flex items-start space-x-3 mb-3">
-                            ${brainrot.foto ? 
-                                `<img src="/uploads/${brainrot.foto.split('/').pop()}" alt="${brainrot.nome}" class="w-20 h-20 object-cover rounded-lg flex-shrink-0">` :
-                                `<div class="w-20 h-20 bg-gray-300 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <i class="fas fa-cube text-gray-500 text-xl"></i>
+                            ${brainrot.foto && brainrot.foto.startsWith('http') ? 
+                                `<img src="${brainrot.foto}" alt="${brainrot.nome}" class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg flex-shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" onload="this.nextElementSibling.style.display='none';"><div class="w-16 h-16 md:w-20 md:h-20 bg-gray-300 rounded-lg items-center justify-center flex-shrink-0 hidden"><i class="fas fa-cube text-gray-500 text-lg md:text-xl"></i></div>` :
+                                brainrot.foto && !brainrot.foto.startsWith('http') ?
+                                `<img src="/uploads/${brainrot.foto.split('/').pop()}" alt="${brainrot.nome}" class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg flex-shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" onload="this.nextElementSibling.style.display='none';"><div class="w-16 h-16 md:w-20 md:h-20 bg-gray-300 rounded-lg items-center justify-center flex-shrink-0 hidden"><i class="fas fa-cube text-gray-500 text-lg md:text-xl"></i></div>` :
+                                `<div class="w-16 h-16 md:w-20 md:h-20 bg-gray-300 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-cube text-gray-500 text-lg md:text-xl"></i>
                                 </div>`
                             }
                             <div class="flex-1 min-w-0">

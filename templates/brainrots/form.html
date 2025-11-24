@@ -448,9 +448,8 @@
                             
                             // Preencher foto se existir
                             if (dados.foto) {
-                                fotoUrl.value = dados.foto;
-                                previewImage.src = dados.foto;
-                                previewImage.classList.remove('hidden');
+                                $('#foto-url').val(dados.foto);
+                                atualizarPreviewImagem(dados.foto);
                             }
                             
                             // Preencher contas
