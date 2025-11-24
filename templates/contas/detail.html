@@ -44,15 +44,29 @@
             </a>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="bg-purple-50 rounded-lg p-4">
                 <p class="text-sm text-gray-600 mb-1">Total de Brainrots</p>
                 <p class="text-2xl font-bold text-purple-600">{{ brainrots|length }}</p>
             </div>
+            <div class="bg-orange-50 rounded-lg p-4">
+                <p class="text-sm text-gray-600 mb-1">Espaços Totais</p>
+                <p class="text-2xl font-bold text-orange-600">
+                    {% if conta.espacos > 0 %}
+                        {{ conta.espacos }}
+                    {% else %}
+                        <span class="text-lg">Ilimitado</span>
+                    {% endif %}
+                </p>
+            </div>
             <div class="bg-green-50 rounded-lg p-4">
-                <p class="text-sm text-gray-600 mb-1">Data de Criação</p>
-                <p class="text-sm font-medium text-green-600">
-                    {{ conta.data_criacao.strftime('%d/%m/%Y') if conta.data_criacao else 'N/A' }}
+                <p class="text-sm text-gray-600 mb-1">Espaços Livres</p>
+                <p class="text-2xl font-bold {% if conta.get_espacos_livres() is none or conta.get_espacos_livres() > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    {% if conta.get_espacos_livres() is none %}
+                        <span class="text-lg">Ilimitado</span>
+                    {% else %}
+                        {{ conta.get_espacos_livres() }}
+                    {% endif %}
                 </p>
             </div>
             <div class="bg-blue-50 rounded-lg p-4">
@@ -66,9 +80,21 @@
     
     <!-- Brainrots da Conta -->
     <div class="card rounded-xl shadow-xl p-8">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">
-            <i class="fas fa-cube mr-3 text-purple-600"></i>Brainrots desta Conta
-        </h2>
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+            <h2 class="text-2xl font-bold text-gray-800">
+                <i class="fas fa-cube mr-3 text-purple-600"></i>Brainrots desta Conta
+            </h2>
+            {% if conta.tem_espaco_disponivel() or conta.espacos == 0 %}
+            <a href="{{ url_for('brainrot_new', conta_id=conta.id) }}" 
+               class="btn-primary text-white px-4 py-2 md:px-6 md:py-3 rounded-lg font-medium hover:no-underline text-sm md:text-base">
+                <i class="fas fa-plus mr-2"></i>Adicionar Brainrot
+            </a>
+            {% else %}
+            <button disabled class="bg-gray-400 text-white px-4 py-2 md:px-6 md:py-3 rounded-lg font-medium text-sm md:text-base cursor-not-allowed">
+                <i class="fas fa-ban mr-2"></i>Conta Cheia
+            </button>
+            {% endif %}
+        </div>
         
         {% if brainrots|length > 0 %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -77,9 +103,23 @@
                  onclick="window.location.href='{{ url_for('brainrot_edit', id=brainrot.id) }}'">
                 <div class="flex items-start space-x-4 mb-3">
                     {% if brainrot.foto %}
-                    <img src="{{ url_for('uploaded_file', filename=brainrot.foto.split('/')[-1]) }}" 
-                         alt="{{ brainrot.nome }}" 
-                         class="w-28 h-28 object-cover rounded-lg">
+                        {% if brainrot.foto.startswith('http') %}
+                        <img src="{{ brainrot.foto }}" 
+                             alt="{{ brainrot.nome }}" 
+                             class="w-28 h-28 object-cover rounded-lg"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="w-28 h-28 bg-gray-300 rounded-lg items-center justify-center hidden">
+                            <i class="fas fa-cube text-gray-500 text-2xl"></i>
+                        </div>
+                        {% else %}
+                        <img src="{{ url_for('uploaded_file', filename=brainrot.foto.split('/')[-1]) }}" 
+                             alt="{{ brainrot.nome }}" 
+                             class="w-28 h-28 object-cover rounded-lg"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="w-28 h-28 bg-gray-300 rounded-lg items-center justify-center hidden">
+                            <i class="fas fa-cube text-gray-500 text-2xl"></i>
+                        </div>
+                        {% endif %}
                     {% else %}
                     <div class="w-28 h-28 bg-gray-300 rounded-lg flex items-center justify-center">
                         <i class="fas fa-cube text-gray-500 text-2xl"></i>

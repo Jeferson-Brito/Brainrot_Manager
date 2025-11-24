@@ -30,9 +30,9 @@
             </a>
         </div>
         
-        <div class="card rounded-xl shadow-xl p-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-6">
-                <i class="fas fa-cube mr-3 text-purple-600"></i>
+        <div class="card rounded-xl shadow-xl p-4 md:p-8">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-6">
+                <i class="fas fa-cube mr-2 md:mr-3 text-purple-600"></i>
                 {% if brainrot %}Editar Brainrot{% else %}Novo Brainrot{% endif %}
             </h1>
             
@@ -62,21 +62,37 @@
                     </div>
                 </div>
                 
-                <!-- Foto -->
+                <!-- Foto (URL) -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Foto</label>
-                    <div class="upload-area rounded-lg p-8 text-center cursor-pointer" id="upload-area">
-                        {% if brainrot and brainrot.foto %}
-                        <img id="preview-image" src="{{ url_for('uploaded_file', filename=brainrot.foto.split('/')[-1]) }}" 
-                             alt="Preview" class="max-w-xs mx-auto rounded-lg mb-4">
-                        {% else %}
-                        <i class="fas fa-image text-5xl text-gray-400 mb-4"></i>
-                        <p class="text-gray-600 mb-2">Clique ou arraste uma imagem aqui</p>
-                        <p class="text-sm text-gray-500">PNG, JPG, GIF até 10MB</p>
-                        <img id="preview-image" src="" alt="Preview" class="hidden max-w-xs mx-auto rounded-lg mb-4">
-                        {% endif %}
-                        <input type="file" id="foto-input" accept="image/*" class="hidden">
-                        <input type="hidden" id="foto-url" name="foto" value="{{ brainrot.foto if brainrot else '' }}">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">URL da Imagem</label>
+                    <input type="url" id="foto-url" name="foto" 
+                           value="{{ brainrot.foto if brainrot else '' }}"
+                           class="input-modern w-full px-4 py-3 rounded-lg focus:outline-none"
+                           placeholder="https://exemplo.com/imagem.png"
+                           oninput="atualizarPreviewImagem(this.value)">
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Cole o link da imagem do navegador (ex: link de imagens do Roblox, Imgur, etc.)
+                    </p>
+                    <div class="mt-4 text-center">
+                        <div id="preview-container" class="inline-block">
+                            {% if brainrot and brainrot.foto %}
+                            <img id="preview-image" src="{{ brainrot.foto }}" 
+                                 alt="Preview" 
+                                 class="max-w-full h-48 w-48 object-cover rounded-lg border-2 border-gray-300 mx-auto"
+                                 onerror="this.style.display='none'; document.getElementById('preview-placeholder').style.display='block';">
+                            {% else %}
+                            <img id="preview-image" src="" alt="Preview" 
+                                 class="hidden max-w-full h-48 w-48 object-cover rounded-lg border-2 border-gray-300 mx-auto"
+                                 onerror="this.style.display='none'; document.getElementById('preview-placeholder').style.display='block';">
+                            {% endif %}
+                            <div id="preview-placeholder" class="{% if brainrot and brainrot.foto %}hidden{% endif %} w-48 h-48 bg-gray-200 rounded-lg border-2 border-gray-300 mx-auto flex items-center justify-center">
+                                <div class="text-center">
+                                    <i class="fas fa-image text-4xl text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-500">Nenhuma imagem</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -126,8 +142,8 @@
                     <!-- Eventos (Mutações) -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Eventos</label>
-                        <div class="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto bg-white">
-                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        <div class="border border-gray-200 rounded-lg p-3 md:p-4 max-h-64 overflow-y-auto bg-white">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
                                 {% for evento in eventos %}
                                 <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
                                     <input type="checkbox" name="eventos_checkbox" value="{{ evento }}"
@@ -146,13 +162,31 @@
                 <!-- Contas Associadas -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Contas Associadas</label>
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-4">
                         {% for conta in contas %}
-                        <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                        {% set espacos_ocupados = conta.get_espacos_ocupados() %}
+                        {% set espacos_livres = conta.get_espacos_livres() %}
+                        {% set tem_espaco = conta.tem_espaco_disponivel() %}
+                        <label class="flex items-start space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded {% if not tem_espaco and conta.espacos > 0 %}opacity-60{% endif %}"
+                               title="{% if not tem_espaco and conta.espacos > 0 %}Conta cheia{% elif conta.espacos > 0 %}Espaços: {{ espacos_ocupados }}/{{ conta.espacos }} ({{ espacos_livres }} livres){% else %}Espaços ilimitados{% endif %}">
                             <input type="checkbox" name="contas" value="{{ conta.id }}"
                                    {% if brainrot and conta.id in contas_associadas %}checked{% endif %}
-                                   class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                            <span class="text-sm text-gray-700">{{ conta.nome }}</span>
+                                   {% if not tem_espaco and conta.espacos > 0 and (not brainrot or conta.id not in contas_associadas) %}disabled{% endif %}
+                                   class="rounded border-gray-300 text-purple-600 focus:ring-purple-500 mt-1">
+                            <div class="flex-1">
+                                <span class="text-sm text-gray-700 font-medium">{{ conta.nome }}</span>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    {% if conta.espacos > 0 %}
+                                        {% if tem_espaco %}
+                                            <span class="text-green-600">{{ espacos_ocupados }}/{{ conta.espacos }} ({{ espacos_livres }} livres)</span>
+                                        {% else %}
+                                            <span class="text-red-600">Cheia ({{ espacos_ocupados }}/{{ conta.espacos }})</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-blue-600">Ilimitado ({{ espacos_ocupados }} usados)</span>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </label>
                         {% endfor %}
                     </div>
@@ -275,66 +309,39 @@
     const camposPersonalizadosExistentes = {{ (brainrot.get_campos_personalizados() | tojson) if brainrot else '{}' }};
     let campoCounter = 0;
     
-    // Upload de imagem
-    const uploadArea = document.getElementById('upload-area');
-    const fotoInput = document.getElementById('foto-input');
-    const fotoUrl = document.getElementById('foto-url');
-    const previewImage = document.getElementById('preview-image');
-    
-    uploadArea.addEventListener('click', () => fotoInput.click());
-    
-    fotoInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            uploadImage(file);
-        }
-    });
-    
-    uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('dragover');
-    });
-    
-    uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('dragover');
-    });
-    
-    uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) {
-            uploadImage(file);
-        }
-    });
-    
-    function uploadImage(file) {
-        const formData = new FormData();
-        formData.append('file', file);
+    // Preview de imagem por URL
+    function atualizarPreviewImagem(url) {
+        const previewImage = document.getElementById('preview-image');
+        const previewPlaceholder = document.getElementById('preview-placeholder');
         
-        $.ajax({
-            url: '/api/upload',
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(response) {
-                if (response.success) {
-                    fotoUrl.value = response.url;
-                    previewImage.src = response.url;
-                    previewImage.classList.remove('hidden');
-                    uploadArea.querySelector('p').classList.add('hidden');
-                    uploadArea.querySelector('i').classList.add('hidden');
-                }
-            },
-            error: function() {
-                alert('Erro ao fazer upload da imagem');
-            }
-        });
+        if (url && url.trim() !== '') {
+            previewImage.src = url;
+            previewImage.classList.remove('hidden');
+            previewPlaceholder.classList.add('hidden');
+            
+            // Verificar se a imagem carregou com sucesso
+            previewImage.onload = function() {
+                previewImage.style.display = 'block';
+                previewPlaceholder.style.display = 'none';
+            };
+            
+            previewImage.onerror = function() {
+                previewImage.style.display = 'none';
+                previewPlaceholder.style.display = 'block';
+            };
+        } else {
+            previewImage.classList.add('hidden');
+            previewPlaceholder.classList.remove('hidden');
+        }
     }
     
     // Carregar campos personalizados existentes e valor formatado
     $(document).ready(function() {
+        // Pré-selecionar conta se vier da página de detalhes
+        {% if conta_pre_selecionada %}
+        $(`input[name="contas"][value="{{ conta_pre_selecionada }}"]`).prop('checked', true);
+        {% endif %}
+        
         // Definir K/s como padrão se for novo brainrot
         {% if not brainrot %}
         $('#valor_formato').val('K/s');
@@ -432,9 +439,11 @@
                                 }
                             }
                             
-                            // Preencher eventos
+                            // Preencher eventos (checkboxes)
                             if (dados.eventos && dados.eventos.length > 0) {
-                                $('#eventos').val(dados.eventos);
+                                dados.eventos.forEach(function(evento) {
+                                    $(`input[name="eventos_checkbox"][value="${evento}"]`).prop('checked', true);
+                                });
                             }
                             
                             // Preencher foto se existir
@@ -538,7 +547,7 @@
         
         const dados = {
             nome: $('#nome').val(),
-            foto: fotoUrl.value,
+            foto: $('#foto-url').val().trim(),
             raridade: $('#raridade').val(),
             valor_formatado: valorFormatado,
             valor_por_segundo: parseFloat(valorNumero) || 0,  // Mantido para compatibilidade
