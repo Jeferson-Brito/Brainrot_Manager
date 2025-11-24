@@ -40,10 +40,26 @@
                 <!-- Nome -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
-                    <input type="text" id="nome" name="nome" required
-                           value="{{ brainrot.nome if brainrot else '' }}"
-                           class="input-modern w-full px-4 py-3 rounded-lg focus:outline-none"
-                           placeholder="Nome do Brainrot">
+                    <div class="flex gap-2">
+                        <input type="text" id="nome" name="nome" required
+                               value="{{ brainrot.nome if brainrot else '' }}"
+                               class="input-modern flex-1 px-4 py-3 rounded-lg focus:outline-none"
+                               placeholder="Nome do Brainrot">
+                        {% if not brainrot %}
+                        <button type="button" id="btn-copiar-dados" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors"
+                                title="Copiar dados de outro brainrot">
+                            <i class="fas fa-copy mr-2"></i>Copiar
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div id="sugestao-raridade" class="hidden mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p class="text-sm text-yellow-800">
+                            <i class="fas fa-lightbulb mr-1"></i>
+                            Sugestão: Brainrots com este nome geralmente têm raridade <strong id="raridade-sugerida"></strong>
+                            <button type="button" id="aplicar-sugestao" class="ml-2 text-blue-600 hover:text-blue-700 font-medium">Aplicar</button>
+                        </p>
+                    </div>
                 </div>
                 
                 <!-- Foto -->
@@ -88,11 +104,11 @@
                                    placeholder="0.0">
                             <select id="valor_formato" name="valor_formato"
                                     class="input-modern px-4 py-3 rounded-lg focus:outline-none">
-                                <option value="/s">/s</option>
-                                <option value="K/s">K/s</option>
-                                <option value="M/s">M/s</option>
-                                <option value="B/s">B/s</option>
-                                <option value="T/s">T/s</option>
+                                <option value="/s" {% if brainrot and brainrot.valor_formatado and '/s' in brainrot.valor_formatado and 'K/s' not in brainrot.valor_formatado and 'M/s' not in brainrot.valor_formatado and 'B/s' not in brainrot.valor_formatado %}selected{% elif not brainrot %}selected{% endif %}>/s</option>
+                                <option value="K/s" {% if brainrot and brainrot.valor_formatado and 'K/s' in brainrot.valor_formatado %}selected{% elif not brainrot %}selected{% endif %}>K/s</option>
+                                <option value="M/s" {% if brainrot and brainrot.valor_formatado and 'M/s' in brainrot.valor_formatado %}selected{% endif %}>M/s</option>
+                                <option value="B/s" {% if brainrot and brainrot.valor_formatado and 'B/s' in brainrot.valor_formatado %}selected{% endif %}>B/s</option>
+                                <option value="T/s" {% if brainrot and brainrot.valor_formatado and 'T/s' in brainrot.valor_formatado %}selected{% endif %}>T/s</option>
                             </select>
                         </div>
                         <input type="hidden" id="valor_formatado" name="valor_formatado">
@@ -107,13 +123,22 @@
                                placeholder="1">
                     </div>
                     
-                    <!-- Número de Mutações -->
+                    <!-- Eventos (Mutações) -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Número de Mutações</label>
-                        <input type="number" id="numero_mutacoes" name="numero_mutacoes" min="0"
-                               value="{{ brainrot.numero_mutacoes if brainrot else '0' }}"
-                               class="input-modern w-full px-4 py-3 rounded-lg focus:outline-none"
-                               placeholder="0">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Eventos</label>
+                        <select id="eventos" name="eventos" multiple
+                                class="input-modern w-full px-4 py-3 rounded-lg focus:outline-none"
+                                style="min-height: 120px;">
+                            {% for evento in eventos %}
+                            <option value="{{ evento }}" 
+                                    {% if brainrot and evento in brainrot.get_eventos() %}selected{% endif %}>
+                                {{ evento }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Mantenha Ctrl/Cmd pressionado para selecionar múltiplos eventos</p>
+                        <!-- Campo oculto para manter compatibilidade -->
+                        <input type="hidden" id="numero_mutacoes" name="numero_mutacoes" value="0">
                     </div>
                 </div>
                 
@@ -174,13 +199,19 @@
                             
                             <!-- Outras instâncias -->
                             {% for instancia in instancias %}
-                            <div class="bg-white rounded-lg p-4 border border-gray-300 hover:border-purple-400 transition-colors">
+                            <div class="bg-white rounded-lg p-4 border border-gray-300 hover:border-purple-400 transition-colors" data-instancia-id="{{ instancia.id }}">
                                 <div class="flex items-center justify-between mb-2">
                                     <h4 class="font-medium text-gray-700">Instância #{{ loop.index + 1 }}</h4>
-                                    <a href="{{ url_for('brainrot_edit', id=instancia.id) }}" 
-                                       class="text-xs text-purple-600 hover:text-purple-700 font-medium">
-                                        <i class="fas fa-edit mr-1"></i>Editar
-                                    </a>
+                                    <div class="flex gap-2">
+                                        <a href="{{ url_for('brainrot_edit', id=instancia.id) }}" 
+                                           class="text-xs text-purple-600 hover:text-purple-700 font-medium">
+                                            <i class="fas fa-edit mr-1"></i>Editar
+                                        </a>
+                                        <button type="button" onclick="excluirInstancia({{ instancia.id }})" 
+                                                class="text-xs text-red-600 hover:text-red-700 font-medium">
+                                            <i class="fas fa-trash mr-1"></i>Excluir
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                                     <div>
@@ -303,6 +334,11 @@
     
     // Carregar campos personalizados existentes e valor formatado
     $(document).ready(function() {
+        // Definir K/s como padrão se for novo brainrot
+        {% if not brainrot %}
+        $('#valor_formato').val('K/s');
+        {% endif %}
+        
         // Carregar valor formatado se existir
         {% if brainrot and brainrot.valor_formatado %}
         const valorFormatado = "{{ brainrot.valor_formatado }}";
@@ -327,7 +363,129 @@
                 adicionarCampoPersonalizado(key, camposPersonalizadosExistentes[key]);
             });
         }
+        
+        // Sugestão de raridade ao digitar nome (apenas para novos brainrots)
+        {% if not brainrot %}
+        $('#nome').on('input', function() {
+            const nome = $(this).val().trim();
+            if (nome.length > 2) {
+                $.get('/api/brainrots/buscar-por-nome', { nome: nome }, function(response) {
+                    if (response.success && response.raridade_sugerida) {
+                        $('#raridade-sugerida').text(response.raridade_sugerida);
+                        $('#sugestao-raridade').removeClass('hidden');
+                    } else {
+                        $('#sugestao-raridade').addClass('hidden');
+                    }
+                });
+            } else {
+                $('#sugestao-raridade').addClass('hidden');
+            }
+        });
+        
+        // Aplicar sugestão de raridade
+        $('#aplicar-sugestao').on('click', function() {
+            const raridade = $('#raridade-sugerida').text();
+            $('#raridade').val(raridade);
+            $('#sugestao-raridade').addClass('hidden');
+        });
+        {% endif %}
     });
+    
+    // Função para copiar dados de outro brainrot
+    {% if not brainrot %}
+    $('#btn-copiar-dados').on('click', function() {
+        // Buscar brainrots via API
+        $.get('/api/brainrots', function(brainrots) {
+            if (brainrots.length === 0) {
+                alert('Não há brainrots cadastrados para copiar.');
+                return;
+            }
+            
+            let opcoes = 'Selecione o brainrot para copiar:\n\n';
+            brainrots.forEach(function(br, index) {
+                opcoes += `${index + 1}. ${br.nome} (${br.raridade})\n`;
+            });
+            
+            const escolha = prompt(opcoes + '\nDigite o número:');
+            const indice = parseInt(escolha) - 1;
+            
+            if (indice >= 0 && indice < brainrots.length) {
+                const brainrotEscolhido = brainrots[indice];
+                
+                if (confirm(`Copiar dados de "${brainrotEscolhido.nome}"?`)) {
+                    $.get(`/api/brainrots/${brainrotEscolhido.id}/copiar`, function(response) {
+                        if (response.success) {
+                            const dados = response.dados;
+                            
+                            // Preencher campos
+                            $('#nome').val(dados.nome);
+                            $('#raridade').val(dados.raridade);
+                            $('#quantidade').val(dados.quantidade || 1);
+                            
+                            // Preencher valor formatado
+                            if (dados.valor_formatado) {
+                                const match = dados.valor_formatado.match(/\$?([\d.]+)([KMBT]?\/s)/i);
+                                if (match) {
+                                    $('#valor_numero').val(match[1]);
+                                    $('#valor_formato').val(match[2] || '/s');
+                                }
+                            }
+                            
+                            // Preencher eventos
+                            if (dados.eventos && dados.eventos.length > 0) {
+                                $('#eventos').val(dados.eventos);
+                            }
+                            
+                            // Preencher foto se existir
+                            if (dados.foto) {
+                                fotoUrl.value = dados.foto;
+                                previewImage.src = dados.foto;
+                                previewImage.classList.remove('hidden');
+                            }
+                            
+                            // Preencher contas
+                            if (dados.contas && dados.contas.length > 0) {
+                                // Buscar IDs das contas pelos nomes
+                                const contasNomes = dados.contas;
+                                $('input[name="contas"]').each(function() {
+                                    const contaNome = $(this).parent().find('span').text();
+                                    if (contasNomes.includes(contaNome)) {
+                                        $(this).prop('checked', true);
+                                    }
+                                });
+                            }
+                            
+                            // Preencher campos personalizados
+                            if (dados.campos_personalizados) {
+                                Object.keys(dados.campos_personalizados).forEach(function(key) {
+                                    adicionarCampoPersonalizado(key, dados.campos_personalizados[key]);
+                                });
+                            }
+                            
+                            alert('Dados copiados com sucesso!');
+                        }
+                    });
+                }
+            }
+        });
+    });
+    {% endif %}
+    
+    // Função para excluir instância
+    function excluirInstancia(id) {
+        if (confirm('Tem certeza que deseja excluir esta instância?')) {
+            $.ajax({
+                url: `/api/brainrots/${id}`,
+                type: 'DELETE',
+                success: function() {
+                    location.reload();
+                },
+                error: function() {
+                    alert('Erro ao excluir instância');
+                }
+            });
+        }
+    }
     
     function adicionarCampoPersonalizado(nome = '', valor = '') {
         campoCounter++;
@@ -371,6 +529,9 @@
         const valorFormato = $('#valor_formato').val() || '/s';
         const valorFormatado = '$' + valorNumero + valorFormato;
         
+        // Coletar eventos selecionados
+        const eventosSelecionados = $('#eventos').val() || [];
+        
         const dados = {
             nome: $('#nome').val(),
             foto: fotoUrl.value,
@@ -379,6 +540,7 @@
             valor_por_segundo: parseFloat(valorNumero) || 0,  // Mantido para compatibilidade
             quantidade: parseInt($('#quantidade').val()) || 1,
             numero_mutacoes: parseInt($('#numero_mutacoes').val()) || 0,
+            eventos: eventosSelecionados,
             contas: $('input[name="contas"]:checked').map(function() {
                 return parseInt($(this).val());
             }).get(),

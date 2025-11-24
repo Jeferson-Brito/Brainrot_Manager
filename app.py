@@ -72,14 +72,15 @@ def init_db():
                 # Se migrações falharem, tentar criar tabelas diretamente
                 try:
                     db.create_all()
-                    # Tentar adicionar coluna ordem manualmente se não existir
+                    # Tentar adicionar colunas manualmente se não existirem
                     try:
                         from sqlalchemy import text
                         db.session.execute(text("ALTER TABLE brainrot ADD COLUMN IF NOT EXISTS ordem INTEGER DEFAULT 0"))
+                        db.session.execute(text("ALTER TABLE brainrot ADD COLUMN IF NOT EXISTS eventos TEXT"))
                         db.session.commit()
-                        print("Coluna ordem adicionada com sucesso!")
+                        print("Colunas ordem e eventos adicionadas com sucesso!")
                     except Exception as col_error:
-                        print(f"Aviso ao adicionar coluna ordem: {col_error}")
+                        print(f"Aviso ao adicionar colunas: {col_error}")
                         db.session.rollback()
                     print("Tabelas criadas/verificadas com sucesso!")
                 except Exception as create_error:

@@ -102,14 +102,24 @@
                         <p class="font-bold text-gray-800">{{ brainrot.quantidade }}</p>
                     </div>
                     <div>
-                        <p class="text-gray-600">Mutações</p>
-                        <p class="font-bold text-gray-800">{{ brainrot.numero_mutacoes }}</p>
+                        <p class="text-gray-600">Eventos</p>
+                        <p class="font-bold text-gray-800 text-xs">
+                            {% if brainrot.get_eventos() %}
+                                {{ brainrot.get_eventos()|join(', ') }}
+                            {% else %}
+                                Nenhum
+                            {% endif %}
+                        </p>
                     </div>
-                    <div>
+                    <div class="flex gap-2">
                         <a href="{{ url_for('brainrot_edit', id=brainrot.id) }}" 
                            class="text-blue-600 hover:text-blue-700 text-sm font-medium">
                             <i class="fas fa-edit mr-1"></i>Editar
                         </a>
+                        <button onclick="excluirInstancia({{ brainrot.id }})" 
+                                class="text-red-600 hover:text-red-700 text-sm font-medium">
+                            <i class="fas fa-trash mr-1"></i>Excluir
+                        </button>
                     </div>
                 </div>
             </div>
@@ -126,5 +136,24 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function excluirInstancia(id) {
+        if (confirm('Tem certeza que deseja excluir esta instância?')) {
+            $.ajax({
+                url: `/api/brainrots/${id}`,
+                type: 'DELETE',
+                success: function() {
+                    location.reload();
+                },
+                error: function() {
+                    alert('Erro ao excluir instância');
+                }
+            });
+        }
+    }
+</script>
 {% endblock %}
 

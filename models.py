@@ -24,7 +24,8 @@ def create_models(db):
         valor_por_segundo = db.Column(db.Float, default=0.0)  # Mantido para compatibilidade
         valor_formatado = db.Column(db.String(50), default='$0/s')  # Valor formatado (ex: $1.3B/s)
         quantidade = db.Column(db.Integer, default=1)
-        numero_mutacoes = db.Column(db.Integer, default=0)
+        numero_mutacoes = db.Column(db.Integer, default=0)  # Mantido para compatibilidade
+        eventos = db.Column(db.Text)  # JSON com lista de eventos
         ordem = db.Column(db.Integer, default=0)  # Ordem personalizada para arrastar e soltar
         campos_personalizados = db.Column(db.Text)  # JSON com campos dinâmicos
         data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
@@ -49,6 +50,22 @@ def create_models(db):
                 self.campos_personalizados = json.dumps(campos_dict)
             else:
                 self.campos_personalizados = json.dumps({})
+        
+        def get_eventos(self):
+            """Retorna os eventos como lista"""
+            if self.eventos:
+                try:
+                    return json.loads(self.eventos)
+                except:
+                    return []
+            return []
+        
+        def set_eventos(self, eventos_list):
+            """Define os eventos a partir de uma lista"""
+            if eventos_list:
+                self.eventos = json.dumps(eventos_list)
+            else:
+                self.eventos = json.dumps([])
         
         def get_raridade_ordem(self):
             """Retorna a ordem numérica da raridade para ordenação"""
@@ -81,6 +98,7 @@ def create_models(db):
                 'valor_formatado': self.valor_formatado or f'${self.valor_por_segundo}/s',
                 'quantidade': self.quantidade,
                 'numero_mutacoes': self.numero_mutacoes,
+                'eventos': self.get_eventos(),
                 'ordem': ordem_valor,
                 'campos_personalizados': self.get_campos_personalizados(),
                 'contas': [conta.nome for conta in self.contas.all()],

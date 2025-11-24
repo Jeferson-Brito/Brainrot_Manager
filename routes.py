@@ -12,6 +12,16 @@ from collections import defaultdict
 # Lista de raridades disponíveis
 RARIDADES = ['Comum', 'Raro', 'Épico', 'Lendário', 'Mítico', 'Deus Brainrot', 'Secreto', 'OG']
 
+# Lista de eventos disponíveis
+EVENTOS = [
+    '10B', '1x1x1x1', '4 de Julho', 'Sangue Podre', 'Bombardeiro', 'Brasil', 'Doce', 'Celestial',
+    'Concerto', 'Crab Rave', 'Diamante', 'Extinto', 'Fogo', 'Galáxia', 'Falha', 'Ouro',
+    'Indonésia', 'Lava', 'Relâmpago', 'Matteo', 'Meowl', 'México', 'Gatos Nyan', 'Pintura',
+    'Abóbora', 'Radioativo', 'Chuva', 'Arco-íris', 'Chovendo Tacos', 'RIP', 'Tubarão',
+    'Sonolento', 'Neve', 'Aranha', 'Queda de Estrelas', 'Morango', 'Gravata', 'Ataque Tung Tung',
+    'OVNI', 'Bruxa', 'Yin-Yang'
+]
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 def allowed_file(filename):
@@ -148,11 +158,14 @@ def brainrot_new():
     """Página para criar novo Brainrot"""
     contas = Conta.query.all()
     campos_personalizados = CampoPersonalizado.query.all()
+    brainrots_existentes = Brainrot.query.all()  # Para opção de copiar
     return render_template('brainrots/form.html', 
                          brainrot=None, 
                          contas=contas,
                          campos_personalizados=campos_personalizados,
-                         raridades=RARIDADES)
+                         raridades=RARIDADES,
+                         eventos=EVENTOS,
+                         brainrots_existentes=brainrots_existentes)
 
 @app.route('/brainrots/<int:id>/editar')
 @login_required
@@ -178,13 +191,16 @@ def brainrot_edit(id):
             'quantidade': inst.quantidade
         })
     
+    brainrots_existentes = Brainrot.query.all()  # Para opção de copiar
     return render_template('brainrots/form.html',
                          brainrot=brainrot,
                          contas=contas,
                          contas_associadas=contas_associadas,
                          campos_personalizados=campos_personalizados,
                          raridades=RARIDADES,
-                         instancias=instancias_data)
+                         eventos=EVENTOS,
+                         instancias=instancias_data,
+                         brainrots_existentes=brainrots_existentes)
 
 @app.route('/contas')
 @login_required
@@ -236,10 +252,12 @@ def api_brainrots_list():
     raridade = request.args.get('raridade', '', type=str)
     valor_min = request.args.get('valor_min', type=float)
     valor_max = request.args.get('valor_max', type=float)
+    valor_formato = request.args.get('valor_formato', '', type=str)  # /s, K/s, M/s, B/s
     quantidade_min = request.args.get('quantidade_min', type=int)
     quantidade_max = request.args.get('quantidade_max', type=int)
     mutacoes_min = request.args.get('mutacoes_min', type=int)
     mutacoes_max = request.args.get('mutacoes_max', type=int)
+    evento = request.args.get('evento', '', type=str)  # Filtro por evento
     conta_id = request.args.get('conta_id', type=int)
     
     # Query base
@@ -250,10 +268,20 @@ def api_brainrots_list():
         query = query.filter(Brainrot.nome.ilike(f'%{busca}%'))
     if raridade:
         query = query.filter(Brainrot.raridade == raridade)
-    if valor_min is not None:
-        query = query.filter(Brainrot.valor_por_segundo >= valor_min)
-    if valor_max is not None:
-        query = query.filter(Brainrot.valor_por_segundo <= valor_max)
+    
+    # Filtro por formato de valor (valor_formatado contém o formato)
+    if valor_formato:
+        query = query.filter(Brainrot.valor_formatado.like(f'%{valor_formato}'))
+    
+    # Filtro por valor numérico (convertendo baseado no formato)
+    if valor_min is not None or valor_max is not None:
+        # Para filtrar por valor, precisamos converter baseado no formato
+        # Por enquanto, vamos filtrar pelo valor_por_segundo se não houver formato específico
+        if valor_min is not None:
+            query = query.filter(Brainrot.valor_por_segundo >= valor_min)
+        if valor_max is not None:
+            query = query.filter(Brainrot.valor_por_segundo <= valor_max)
+    
     if quantidade_min is not None:
         query = query.filter(Brainrot.quantidade >= quantidade_min)
     if quantidade_max is not None:
@@ -262,6 +290,12 @@ def api_brainrots_list():
         query = query.filter(Brainrot.numero_mutacoes >= mutacoes_min)
     if mutacoes_max is not None:
         query = query.filter(Brainrot.numero_mutacoes <= mutacoes_max)
+    
+    # Filtro por evento
+    if evento:
+        # Buscar brainrots que tenham o evento na lista de eventos (JSON)
+        query = query.filter(Brainrot.eventos.like(f'%"{evento}"%'))
+    
     if conta_id:
         query = query.join(brainrot_conta).filter(brainrot_conta.c.conta_id == conta_id)
     
@@ -381,6 +415,13 @@ def api_brainrot_create():
             numero_mutacoes=int(data.get('numero_mutacoes', 0))
         )
         
+        # Eventos - lista de eventos selecionados
+        eventos_list = data.get('eventos', [])
+        if eventos_list:
+            brainrot.set_eventos(eventos_list)
+        else:
+            brainrot.set_eventos([])
+        
         # Campos personalizados - SEMPRE atualizar (mesmo se vazio, para permitir remoção)
         campos_pers = data.get('campos_personalizados', {})
         # Se campos_pers for None, não definir. Se for dict (mesmo vazio), definir.
@@ -435,6 +476,11 @@ def api_brainrot_update(id):
         brainrot.quantidade = int(data.get('quantidade', brainrot.quantidade))
         brainrot.numero_mutacoes = int(data.get('numero_mutacoes', brainrot.numero_mutacoes))
         
+        # Atualizar eventos
+        eventos_list = data.get('eventos', None)
+        if eventos_list is not None:
+            brainrot.set_eventos(eventos_list)
+        
         # Campos personalizados - SEMPRE atualizar (mesmo se vazio, para permitir remoção)
         campos_pers = data.get('campos_personalizados', {})
         # Se campos_pers for None, manter os existentes. Se for dict (mesmo vazio), atualizar.
@@ -486,6 +532,44 @@ def api_brainrots_reorder():
         print(f"ERRO ao reordenar Brainrots: {error_msg}")
         print(traceback.format_exc())
         return jsonify({'success': False, 'error': error_msg}), 400
+
+@app.route('/api/brainrots/buscar-por-nome', methods=['GET'])
+@login_required
+def api_brainrot_buscar_por_nome():
+    """API para buscar brainrot por nome e retornar raridade sugerida"""
+    nome = request.args.get('nome', '', type=str)
+    if not nome:
+        return jsonify({'success': False, 'error': 'Nome não fornecido'}), 400
+    
+    # Buscar brainrots com o mesmo nome
+    brainrots = Brainrot.query.filter(Brainrot.nome.ilike(f'%{nome}%')).all()
+    
+    if brainrots:
+        # Retornar a raridade mais comum ou a primeira encontrada
+        raridades = [br.raridade for br in brainrots]
+        raridade_sugerida = max(set(raridades), key=raridades.count) if raridades else brainrots[0].raridade
+        
+        return jsonify({
+            'success': True,
+            'raridade_sugerida': raridade_sugerida,
+            'encontrados': len(brainrots)
+        })
+    
+    return jsonify({'success': True, 'raridade_sugerida': None, 'encontrados': 0})
+
+@app.route('/api/brainrots/<int:id>/copiar', methods=['GET'])
+@login_required
+def api_brainrot_copiar(id):
+    """API para copiar dados de um brainrot existente"""
+    try:
+        brainrot = Brainrot.query.get_or_404(id)
+        dados = brainrot.to_dict()
+        # Remover id e data_criacao para criar novo
+        dados.pop('id', None)
+        dados.pop('data_criacao', None)
+        return jsonify({'success': True, 'dados': dados})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
 
 @app.route('/api/brainrots/<int:id>', methods=['DELETE'])
 @login_required
