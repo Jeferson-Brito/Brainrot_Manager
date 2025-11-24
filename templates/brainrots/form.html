@@ -79,13 +79,11 @@
                             <img id="preview-image" src="{{ brainrot.foto }}" 
                                  alt="Preview" 
                                  class="max-w-full h-48 w-48 object-cover rounded-lg border-2 border-gray-300 mx-auto"
-                                 crossorigin="anonymous"
-                                 referrerpolicy="no-referrer">
+                                 loading="lazy">
                             {% else %}
                             <img id="preview-image" src="" alt="Preview" 
                                  class="hidden max-w-full h-48 w-48 object-cover rounded-lg border-2 border-gray-300 mx-auto"
-                                 crossorigin="anonymous"
-                                 referrerpolicy="no-referrer">
+                                 loading="lazy">
                             {% endif %}
                             <div id="preview-placeholder" class="{% if brainrot and brainrot.foto %}hidden{% endif %} w-48 h-48 bg-gray-200 rounded-lg border-2 border-gray-300 mx-auto flex items-center justify-center">
                                 <div class="text-center">
@@ -320,55 +318,58 @@
             return;
         }
         
-        // Limpar eventos anteriores
-        previewImage.onload = null;
-        previewImage.onerror = null;
-        
         if (url && url.trim() !== '') {
+            // Limpar src anterior para forçar recarregamento
+            previewImage.src = '';
+            
             // Mostrar placeholder enquanto carrega
             previewImage.style.display = 'none';
-            previewPlaceholder.style.display = 'block';
+            previewImage.classList.add('hidden');
+            previewPlaceholder.style.display = 'flex';
             
-            // Tentar carregar a imagem
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.referrerPolicy = 'no-referrer';
-            
-            img.onload = function() {
-                previewImage.src = url;
-                previewImage.style.display = 'block';
-                previewPlaceholder.style.display = 'none';
-                previewImage.classList.remove('hidden');
-            };
-            
-            img.onerror = function() {
-                console.error('Erro ao carregar imagem:', url);
-                previewImage.style.display = 'none';
-                previewPlaceholder.style.display = 'block';
-                previewImage.classList.add('hidden');
+            // Função para tentar carregar a imagem
+            function tentarCarregarImagem(imgUrl, usarCrossOrigin) {
+                const img = new Image();
                 
-                // Tentar sem crossorigin se falhar
-                if (img.crossOrigin) {
-                    const img2 = new Image();
-                    img2.onload = function() {
-                        previewImage.src = url;
-                        previewImage.style.display = 'block';
-                        previewPlaceholder.style.display = 'none';
-                        previewImage.classList.remove('hidden');
-                    };
-                    img2.onerror = function() {
-                        previewImage.style.display = 'none';
-                        previewPlaceholder.style.display = 'block';
-                    };
-                    img2.src = url;
+                if (usarCrossOrigin) {
+                    img.crossOrigin = 'anonymous';
                 }
-            };
+                img.referrerPolicy = 'no-referrer';
+                
+                img.onload = function() {
+                    // Sucesso! Atualizar a imagem de preview
+                    previewImage.src = imgUrl;
+                    previewImage.style.display = 'block';
+                    previewImage.classList.remove('hidden');
+                    previewPlaceholder.style.display = 'none';
+                    
+                    // Remover atributos que podem causar problemas
+                    previewImage.removeAttribute('crossorigin');
+                };
+                
+                img.onerror = function() {
+                    // Se falhou com crossorigin, tentar sem
+                    if (usarCrossOrigin) {
+                        tentarCarregarImagem(imgUrl, false);
+                    } else {
+                        // Se falhou completamente, mostrar placeholder
+                        console.warn('Não foi possível carregar a imagem:', imgUrl);
+                        previewImage.style.display = 'none';
+                        previewImage.classList.add('hidden');
+                        previewPlaceholder.style.display = 'flex';
+                    }
+                };
+                
+                // Tentar carregar
+                img.src = imgUrl;
+            }
             
-            img.src = url;
+            // Tentar primeiro com crossorigin, depois sem
+            tentarCarregarImagem(url.trim(), true);
         } else {
             previewImage.classList.add('hidden');
             previewImage.style.display = 'none';
-            previewPlaceholder.style.display = 'block';
+            previewPlaceholder.style.display = 'flex';
         }
     }
     
