@@ -77,8 +77,9 @@ def init_db():
                         from sqlalchemy import text
                         db.session.execute(text("ALTER TABLE brainrot ADD COLUMN IF NOT EXISTS ordem INTEGER DEFAULT 0"))
                         db.session.execute(text("ALTER TABLE brainrot ADD COLUMN IF NOT EXISTS eventos TEXT"))
+                        db.session.execute(text("ALTER TABLE conta ADD COLUMN IF NOT EXISTS espacos INTEGER DEFAULT 0"))
                         db.session.commit()
-                        print("Colunas ordem e eventos adicionadas com sucesso!")
+                        print("Colunas ordem, eventos e espacos adicionadas com sucesso!")
                     except Exception as col_error:
                         print(f"Aviso ao adicionar colunas: {col_error}")
                         db.session.rollback()

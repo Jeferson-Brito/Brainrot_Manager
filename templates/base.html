@@ -371,22 +371,22 @@
 <body>
     <!-- Navbar (apenas se estiver logado) -->
     {% if current_user.is_authenticated %}
-    <nav class="navbar-gradient text-white py-4 mb-8">
-        <div class="container mx-auto px-4">
+    <nav class="navbar-gradient text-white py-3 md:py-4 mb-6 md:mb-8">
+        <div class="container mx-auto px-3 md:px-4">
             <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <i class="fas fa-brain text-3xl"></i>
-                    <h1 class="text-2xl font-bold">Brainrot Manager</h1>
+                <div class="flex items-center space-x-2 md:space-x-3">
+                    <i class="fas fa-brain text-2xl md:text-3xl"></i>
+                    <h1 class="text-lg md:text-2xl font-bold">Brainrot Manager</h1>
                 </div>
-                <div class="flex items-center space-x-6">
-                    <a href="{{ url_for('index') }}" class="hover:text-yellow-200 transition-colors">
-                        <i class="fas fa-home mr-2"></i>Home
+                <div class="flex items-center space-x-2 md:space-x-6">
+                    <a href="{{ url_for('index') }}" class="hover:text-yellow-200 transition-colors text-sm md:text-base">
+                        <i class="fas fa-home md:mr-2"></i><span class="hidden sm:inline">Home</span>
                     </a>
-                    <a href="{{ url_for('brainrots_list') }}" class="hover:text-yellow-200 transition-colors">
-                        <i class="fas fa-cube mr-2"></i>Brainrots
+                    <a href="{{ url_for('brainrots_list') }}" class="hover:text-yellow-200 transition-colors text-sm md:text-base">
+                        <i class="fas fa-cube md:mr-2"></i><span class="hidden sm:inline">Brainrots</span>
                     </a>
-                    <a href="{{ url_for('contas_list') }}" class="hover:text-yellow-200 transition-colors">
-                        <i class="fas fa-users mr-2"></i>Contas
+                    <a href="{{ url_for('contas_list') }}" class="hover:text-yellow-200 transition-colors text-sm md:text-base">
+                        <i class="fas fa-users md:mr-2"></i><span class="hidden sm:inline">Contas</span>
                     </a>
                 </div>
             </div>
@@ -395,7 +395,7 @@
     {% endif %}
     
     <!-- Conteúdo Principal -->
-    <main class="container mx-auto px-4 pb-8">
+    <main class="container mx-auto px-3 md:px-4 pb-6 md:pb-8">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="mb-6">

@@ -112,19 +112,42 @@ def create_models(db):
         id = db.Column(db.Integer, primary_key=True)
         nome = db.Column(db.String(200), nullable=False)
         roblox_id = db.Column(db.String(100))  # ID opcional do Roblox
+        espacos = db.Column(db.Integer, default=0)  # Número de espaços para brainrots
         data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
         data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
         
         # Relacionamento N:N com Brainrots
         brainrots = db.relationship('Brainrot', secondary=brainrot_conta, back_populates='contas', lazy='dynamic')
         
+        def get_espacos_ocupados(self):
+            """Retorna o número de espaços ocupados"""
+            return self.brainrots.count()
+        
+        def get_espacos_livres(self):
+            """Retorna o número de espaços livres"""
+            if self.espacos == 0:
+                return None  # Espaços ilimitados
+            return max(0, self.espacos - self.get_espacos_ocupados())
+        
+        def tem_espaco_disponivel(self):
+            """Verifica se a conta tem espaço disponível"""
+            if self.espacos == 0:
+                return True  # Espaços ilimitados
+            return self.get_espacos_ocupados() < self.espacos
+        
         def to_dict(self):
             """Converte a Conta para dicionário"""
+            espacos_ocupados = self.get_espacos_ocupados()
+            espacos_livres = self.get_espacos_livres()
             return {
                 'id': self.id,
                 'nome': self.nome,
                 'roblox_id': self.roblox_id,
-                'total_brainrots': self.brainrots.count(),
+                'espacos': self.espacos,
+                'espacos_ocupados': espacos_ocupados,
+                'espacos_livres': espacos_livres,
+                'total_brainrots': espacos_ocupados,
+                'tem_espaco': self.tem_espaco_disponivel(),
                 'data_criacao': self.data_criacao.isoformat() if self.data_criacao else None
             }
     

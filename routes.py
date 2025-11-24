@@ -156,12 +156,14 @@ def brainrots_list():
 @login_required
 def brainrot_new():
     """Página para criar novo Brainrot"""
+    conta_id = request.args.get('conta_id', type=int)  # ID da conta se vier da página de detalhes
     contas = Conta.query.all()
     campos_personalizados = CampoPersonalizado.query.all()
     brainrots_existentes = Brainrot.query.all()  # Para opção de copiar
     return render_template('brainrots/form.html', 
                          brainrot=None, 
                          contas=contas,
+                         conta_pre_selecionada=conta_id,
                          campos_personalizados=campos_personalizados,
                          raridades=RARIDADES,
                          eventos=EVENTOS,
@@ -430,11 +432,18 @@ def api_brainrot_create():
         
         db.session.add(brainrot)
         
-        # Associar contas
+        # Associar contas (verificando espaços disponíveis)
         conta_ids = data.get('contas', [])
         if conta_ids and len(conta_ids) > 0:
             try:
                 contas = Conta.query.filter(Conta.id.in_(conta_ids)).all()
+                # Verificar se todas as contas têm espaço disponível
+                contas_sem_espaco = [c.nome for c in contas if not c.tem_espaco_disponivel()]
+                if contas_sem_espaco:
+                    return jsonify({
+                        'success': False, 
+                        'error': f'As seguintes contas estão cheias: {", ".join(contas_sem_espaco)}'
+                    }), 400
                 brainrot.contas = contas
             except Exception as e:
                 print(f"AVISO: Erro ao associar contas: {e}")
@@ -617,7 +626,8 @@ def api_conta_create():
         
         conta = Conta(
             nome=nome,
-            roblox_id=data.get('roblox_id', '')
+            roblox_id=data.get('roblox_id', ''),
+            espacos=int(data.get('espacos', 0)) or 0
         )
         
         db.session.add(conta)
@@ -664,11 +674,18 @@ def api_conta_update(id):
         
         conta.nome = novo_nome
         conta.roblox_id = data.get('roblox_id', conta.roblox_id)
+        conta.espacos = int(data.get('espacos', conta.espacos)) or 0
         
-        # Atualizar brainrots
+        # Atualizar brainrots (verificando espaços disponíveis)
         brainrot_ids = data.get('brainrots', [])
         if brainrot_ids is not None:
             brainrots = Brainrot.query.filter(Brainrot.id.in_(brainrot_ids)).all()
+            # Verificar se há espaço suficiente
+            if conta.espacos > 0 and len(brainrots) > conta.espacos:
+                return jsonify({
+                    'success': False, 
+                    'error': f'A conta tem apenas {conta.espacos} espaço(s), mas você está tentando associar {len(brainrots)} brainrot(s).'
+                }), 400
             conta.brainrots = brainrots
         
         db.session.commit()
