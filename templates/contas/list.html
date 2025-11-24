@@ -138,9 +138,29 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-2">${conta.nome}</h3>
                         ${conta.roblox_id ? `<p class="text-sm text-gray-600 mb-1"><i class="fas fa-id-card mr-1"></i>ID: ${conta.roblox_id}</p>` : ''}
-                        <p class="text-sm text-gray-600">
+                        <p class="text-sm text-gray-600 mb-2">
                             <i class="fas fa-cube mr-1"></i>${conta.total_brainrots} Brainrot${conta.total_brainrots !== 1 ? 's' : ''}
                         </p>
+                        <div class="mt-3 pt-3 border-t border-gray-200">
+                            ${conta.espacos > 0 ? 
+                                conta.espacos_livres !== null && conta.espacos_livres > 0 ?
+                                    `<p class="text-sm text-gray-700">
+                                        <i class="fas fa-boxes mr-1 text-green-600"></i>
+                                        <span class="font-medium">Espaços:</span> ${conta.espacos_ocupados}/${conta.espacos} 
+                                        <span class="text-green-600 font-semibold">(${conta.espacos_livres} livre${conta.espacos_livres !== 1 ? 's' : ''})</span>
+                                    </p>` :
+                                    `<p class="text-sm text-gray-700">
+                                        <i class="fas fa-boxes mr-1 text-red-600"></i>
+                                        <span class="font-medium">Espaços:</span> ${conta.espacos_ocupados}/${conta.espacos} 
+                                        <span class="text-red-600 font-semibold">(Cheia)</span>
+                                    </p>`
+                                :
+                                `<p class="text-sm text-gray-700">
+                                    <i class="fas fa-infinity mr-1 text-blue-600"></i>
+                                    <span class="font-medium">Espaços:</span> <span class="text-blue-600 font-semibold">Ilimitado</span> (${conta.espacos_ocupados} usado${conta.espacos_ocupados !== 1 ? 's' : ''})
+                                </p>`
+                            }
+                        </div>
                     </div>
                 `;
             });

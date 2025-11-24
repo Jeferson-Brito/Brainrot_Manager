@@ -605,7 +605,8 @@ def api_contas_list():
     if busca:
         query = query.filter(Conta.nome.ilike(f'%{busca}%'))
     
-    contas = query.all()
+    # Sempre ordenar por nome alfabeticamente
+    contas = query.order_by(Conta.nome.asc()).all()
     return jsonify([conta.to_dict() for conta in contas])
 
 @app.route('/api/contas', methods=['POST'])
