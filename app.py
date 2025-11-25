@@ -43,7 +43,7 @@ migrate = Migrate(app, db)
 from models import create_models
 
 # Criar modelos com a instância do db
-brainrot_conta, Brainrot, Conta, CampoPersonalizado = create_models(db)
+brainrot_conta, Brainrot, Conta, CampoPersonalizado, HistoricoAlteracao, FiltroSalvo, Meta = create_models(db)
 
 # Configurar user_loader do Flask-Login
 from auth import get_user
@@ -77,9 +77,11 @@ def init_db():
                         from sqlalchemy import text
                         db.session.execute(text("ALTER TABLE brainrot ADD COLUMN IF NOT EXISTS ordem INTEGER DEFAULT 0"))
                         db.session.execute(text("ALTER TABLE brainrot ADD COLUMN IF NOT EXISTS eventos TEXT"))
+                        db.session.execute(text("ALTER TABLE brainrot ADD COLUMN IF NOT EXISTS favorito BOOLEAN DEFAULT FALSE"))
+                        db.session.execute(text("ALTER TABLE brainrot ADD COLUMN IF NOT EXISTS tags TEXT"))
                         db.session.execute(text("ALTER TABLE conta ADD COLUMN IF NOT EXISTS espacos INTEGER DEFAULT 0"))
                         db.session.commit()
-                        print("Colunas ordem, eventos e espacos adicionadas com sucesso!")
+                        print("Colunas adicionadas com sucesso!")
                     except Exception as col_error:
                         print(f"Aviso ao adicionar colunas: {col_error}")
                         db.session.rollback()

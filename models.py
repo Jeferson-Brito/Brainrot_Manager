@@ -28,6 +28,8 @@ def create_models(db):
         eventos = db.Column(db.Text)  # JSON com lista de eventos
         ordem = db.Column(db.Integer, default=0)  # Ordem personalizada para arrastar e soltar
         campos_personalizados = db.Column(db.Text)  # JSON com campos dinâmicos
+        favorito = db.Column(db.Boolean, default=False)  # Sistema de favoritos
+        tags = db.Column(db.Text)  # JSON com lista de tags
         data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
         data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
         
@@ -67,6 +69,22 @@ def create_models(db):
             else:
                 self.eventos = json.dumps([])
         
+        def get_tags(self):
+            """Retorna as tags como lista"""
+            if self.tags:
+                try:
+                    return json.loads(self.tags)
+                except:
+                    return []
+            return []
+        
+        def set_tags(self, tags_list):
+            """Define as tags a partir de uma lista"""
+            if tags_list:
+                self.tags = json.dumps(tags_list)
+            else:
+                self.tags = json.dumps([])
+        
         def get_raridade_ordem(self):
             """Retorna a ordem numérica da raridade para ordenação"""
             ordem_raridades = {
@@ -101,6 +119,8 @@ def create_models(db):
                 'eventos': self.get_eventos(),
                 'ordem': ordem_valor,
                 'campos_personalizados': self.get_campos_personalizados(),
+                'favorito': self.favorito if hasattr(self, 'favorito') else False,
+                'tags': self.get_tags() if hasattr(self, 'tags') else [],
                 'contas': [conta.nome for conta in self.contas.all()],
                 'data_criacao': self.data_criacao.isoformat() if self.data_criacao else None
             }

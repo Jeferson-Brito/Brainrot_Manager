@@ -1,4 +1,4 @@
-from app import app, db, Brainrot, Conta, CampoPersonalizado, brainrot_conta
+from app import app, db, Brainrot, Conta, CampoPersonalizado, brainrot_conta, HistoricoAlteracao, FiltroSalvo, Meta
 from flask import render_template, request, jsonify, redirect, url_for, flash, send_from_directory
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
@@ -333,6 +333,19 @@ def api_brainrots_list():
     # Filtro por evento
     if evento:
         # Buscar brainrots que tenham o evento na lista de eventos (JSON)
+        query = query.filter(Brainrot.eventos.contains(f'"{evento}"'))
+    
+    # Filtrar por favorito
+    favorito = request.args.get('favorito')
+    if favorito == 'true':
+        query = query.filter(Brainrot.favorito == True)
+    elif favorito == 'false':
+        query = query.filter(Brainrot.favorito == False)
+    
+    # Filtrar por tag
+    tag = request.args.get('tag', '').strip()
+    if tag:
+        query = query.filter(Brainrot.tags.contains(f'"{tag}"'))
         query = query.filter(Brainrot.eventos.like(f'%"{evento}"%'))
     
     if conta_id:
@@ -427,6 +440,11 @@ def api_brainrots_list():
             brainrot_dict = lista_brainrots[0].to_dict()
             brainrot_dict['tem_multiplos'] = False
             brainrot_dict['total_instancias'] = 1
+            # Garantir que favorito e tags estejam presentes
+            if 'favorito' not in brainrot_dict:
+                brainrot_dict['favorito'] = False
+            if 'tags' not in brainrot_dict:
+                brainrot_dict['tags'] = []
             resultados.append(brainrot_dict)
     
     return jsonify(resultados)
@@ -457,7 +475,8 @@ def api_brainrot_create():
             valor_formatado=valor_formatado,
             valor_por_segundo=float(data.get('valor_por_segundo', 0)),
             quantidade=int(data.get('quantidade', 1)),
-            numero_mutacoes=int(data.get('numero_mutacoes', 0))
+            numero_mutacoes=int(data.get('numero_mutacoes', 0)),
+            favorito=data.get('favorito', False)
         )
         
         # Eventos - lista de eventos selecionados
@@ -467,6 +486,13 @@ def api_brainrot_create():
         else:
             brainrot.set_eventos([])
         
+        # Tags
+        tags_list = data.get('tags', [])
+        if tags_list:
+            brainrot.set_tags(tags_list)
+        else:
+            brainrot.set_tags([])
+        
         # Campos personalizados - SEMPRE atualizar (mesmo se vazio, para permitir remoção)
         campos_pers = data.get('campos_personalizados', {})
         # Se campos_pers for None, não definir. Se for dict (mesmo vazio), definir.
@@ -474,6 +500,15 @@ def api_brainrot_create():
             brainrot.set_campos_personalizados(campos_pers)
         
         db.session.add(brainrot)
+        
+        # Registrar histórico
+        historico = HistoricoAlteracao(
+            tipo_entidade='brainrot',
+            entidade_id=brainrot.id,
+            acao='criar',
+            dados_novos=json.dumps(brainrot.to_dict())
+        )
+        db.session.add(historico)
         
         # Associar contas (verificando espaços disponíveis)
         conta_ids = data.get('contas', [])
@@ -528,14 +563,26 @@ def api_brainrot_update(id):
             valor_numero = data.get('valor_por_segundo', brainrot.valor_por_segundo)
             brainrot.valor_formatado = f'${valor_numero}/s'
         
+        # Salvar dados anteriores para histórico
+        dados_anteriores = json.dumps(brainrot.to_dict())
+        
         brainrot.valor_por_segundo = float(data.get('valor_por_segundo', brainrot.valor_por_segundo))
         brainrot.quantidade = int(data.get('quantidade', brainrot.quantidade))
         brainrot.numero_mutacoes = int(data.get('numero_mutacoes', brainrot.numero_mutacoes))
+        
+        # Atualizar favorito
+        if 'favorito' in data:
+            brainrot.favorito = data.get('favorito', False)
         
         # Atualizar eventos
         eventos_list = data.get('eventos', None)
         if eventos_list is not None:
             brainrot.set_eventos(eventos_list)
+        
+        # Atualizar tags
+        tags_list = data.get('tags', None)
+        if tags_list is not None:
+            brainrot.set_tags(tags_list)
         
         # Campos personalizados - SEMPRE atualizar (mesmo se vazio, para permitir remoção)
         campos_pers = data.get('campos_personalizados', {})
@@ -549,6 +596,17 @@ def api_brainrot_update(id):
             contas = Conta.query.filter(Conta.id.in_(conta_ids)).all()
             brainrot.contas = contas
         
+        db.session.commit()
+        
+        # Registrar histórico
+        historico = HistoricoAlteracao(
+            tipo_entidade='brainrot',
+            entidade_id=brainrot.id,
+            acao='editar',
+            dados_anteriores=dados_anteriores,
+            dados_novos=json.dumps(brainrot.to_dict())
+        )
+        db.session.add(historico)
         db.session.commit()
         
         return jsonify({'success': True, 'brainrot': brainrot.to_dict()})
@@ -816,6 +874,362 @@ def upload_file():
 def uploaded_file(filename):
     """Serve arquivos enviados"""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+# ==================== FUNCIONALIDADES AVANÇADAS ====================
+
+# Sistema de Favoritos
+@app.route('/api/brainrots/<int:id>/favorito', methods=['POST'])
+@login_required
+def api_toggle_favorito(id):
+    """Alterna o status de favorito de um brainrot"""
+    try:
+        brainrot = Brainrot.query.get_or_404(id)
+        brainrot.favorito = not (brainrot.favorito if hasattr(brainrot, 'favorito') else False)
+        db.session.commit()
+        return jsonify({'success': True, 'favorito': brainrot.favorito})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+# Sistema de Tags
+@app.route('/api/brainrots/<int:id>/tags', methods=['PUT'])
+@login_required
+def api_update_tags(id):
+    """Atualiza as tags de um brainrot"""
+    try:
+        brainrot = Brainrot.query.get_or_404(id)
+        data = request.get_json()
+        tags = data.get('tags', [])
+        brainrot.set_tags(tags)
+        db.session.commit()
+        return jsonify({'success': True, 'tags': brainrot.get_tags()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+# Ações em Lote
+@app.route('/api/brainrots/bulk', methods=['POST'])
+@login_required
+def api_bulk_action():
+    """Executa ações em lote nos brainrots"""
+    try:
+        data = request.get_json()
+        action = data.get('action')  # 'delete', 'favorito', 'tag', 'associar_conta'
+        brainrot_ids = data.get('ids', [])
+        
+        if not brainrot_ids:
+            return jsonify({'success': False, 'error': 'Nenhum brainrot selecionado'}), 400
+        
+        brainrots = Brainrot.query.filter(Brainrot.id.in_(brainrot_ids)).all()
+        
+        if action == 'delete':
+            for br in brainrots:
+                db.session.delete(br)
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'{len(brainrots)} brainrots excluídos'})
+        
+        elif action == 'favorito':
+            favorito = data.get('favorito', True)
+            for br in brainrots:
+                br.favorito = favorito
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'{len(brainrots)} brainrots atualizados'})
+        
+        elif action == 'tag':
+            tags = data.get('tags', [])
+            for br in brainrots:
+                current_tags = br.get_tags()
+                for tag in tags:
+                    if tag not in current_tags:
+                        current_tags.append(tag)
+                br.set_tags(current_tags)
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'Tags adicionadas a {len(brainrots)} brainrots'})
+        
+        elif action == 'associar_conta':
+            conta_id = data.get('conta_id')
+            if not conta_id:
+                return jsonify({'success': False, 'error': 'Conta não especificada'}), 400
+            conta = Conta.query.get_or_404(conta_id)
+            for br in brainrots:
+                if conta not in br.contas.all():
+                    br.contas.append(conta)
+            db.session.commit()
+            return jsonify({'success': True, 'message': f'{len(brainrots)} brainrots associados'})
+        
+        return jsonify({'success': False, 'error': 'Ação inválida'}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+# Filtros Salvos
+@app.route('/api/filtros-salvos', methods=['GET'])
+@login_required
+def api_filtros_salvos_list():
+    """Lista todos os filtros salvos"""
+    tipo = request.args.get('tipo', 'brainrot')
+    filtros = FiltroSalvo.query.filter_by(tipo=tipo).all()
+    return jsonify([f.to_dict() for f in filtros])
+
+@app.route('/api/filtros-salvos', methods=['POST'])
+@login_required
+def api_filtro_salvo_create():
+    """Cria um novo filtro salvo"""
+    try:
+        data = request.get_json()
+        filtro = FiltroSalvo(
+            nome=data.get('nome'),
+            tipo=data.get('tipo', 'brainrot'),
+            filtros=json.dumps(data.get('filtros', {}))
+        )
+        filtro.set_filtros(data.get('filtros', {}))
+        db.session.add(filtro)
+        db.session.commit()
+        return jsonify({'success': True, 'filtro': filtro.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/filtros-salvos/<int:id>', methods=['DELETE'])
+@login_required
+def api_filtro_salvo_delete(id):
+    """Exclui um filtro salvo"""
+    try:
+        filtro = FiltroSalvo.query.get_or_404(id)
+        db.session.delete(filtro)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+# Metas/Objetivos
+@app.route('/api/metas', methods=['GET'])
+@login_required
+def api_metas_list():
+    """Lista todas as metas"""
+    concluidas = request.args.get('concluidas')
+    metas = Meta.query.all()
+    if concluidas == 'true':
+        metas = [m for m in metas if m.concluida]
+    elif concluidas == 'false':
+        metas = [m for m in metas if not m.concluida]
+    return jsonify([m.to_dict() for m in metas])
+
+@app.route('/api/metas', methods=['POST'])
+@login_required
+def api_meta_create():
+    """Cria uma nova meta"""
+    try:
+        data = request.get_json()
+        meta = Meta(
+            nome=data.get('nome'),
+            descricao=data.get('descricao', ''),
+            tipo=data.get('tipo'),
+            valor_alvo=int(data.get('valor_alvo', 0))
+        )
+        db.session.add(meta)
+        db.session.commit()
+        return jsonify({'success': True, 'meta': meta.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/metas/<int:id>', methods=['PUT'])
+@login_required
+def api_meta_update(id):
+    """Atualiza uma meta"""
+    try:
+        meta = Meta.query.get_or_404(id)
+        data = request.get_json()
+        if 'nome' in data:
+            meta.nome = data['nome']
+        if 'descricao' in data:
+            meta.descricao = data['descricao']
+        if 'valor_alvo' in data:
+            meta.valor_alvo = int(data['valor_alvo'])
+        if 'valor_atual' in data:
+            meta.valor_atual = int(data['valor_atual'])
+        if 'concluida' in data:
+            meta.concluida = data['concluida']
+            if data['concluida'] and not meta.data_conclusao:
+                meta.data_conclusao = datetime.utcnow()
+        db.session.commit()
+        return jsonify({'success': True, 'meta': meta.to_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/metas/<int:id>', methods=['DELETE'])
+@login_required
+def api_meta_delete(id):
+    """Exclui uma meta"""
+    try:
+        meta = Meta.query.get_or_404(id)
+        db.session.delete(meta)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+# Histórico de Alterações
+@app.route('/api/historico', methods=['GET'])
+@login_required
+def api_historico_list():
+    """Lista o histórico de alterações"""
+    tipo = request.args.get('tipo')
+    entidade_id = request.args.get('entidade_id', type=int)
+    
+    query = HistoricoAlteracao.query
+    if tipo:
+        query = query.filter_by(tipo_entidade=tipo)
+    if entidade_id:
+        query = query.filter_by(entidade_id=entidade_id)
+    
+    historico = query.order_by(HistoricoAlteracao.data_alteracao.desc()).limit(100).all()
+    return jsonify([h.to_dict() for h in historico])
+
+# Importação de Dados
+@app.route('/api/import/brainrots', methods=['POST'])
+@login_required
+def api_import_brainrots():
+    """Importa brainrots de um arquivo JSON ou CSV"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'Nenhum arquivo enviado'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'Arquivo vazio'}), 400
+        
+        filename = file.filename.lower()
+        importados = 0
+        erros = []
+        
+        if filename.endswith('.json'):
+            data = json.loads(file.read().decode('utf-8'))
+            if not isinstance(data, list):
+                data = [data]
+            
+            for item in data:
+                try:
+                    brainrot = Brainrot(
+                        nome=item.get('nome', 'Sem nome'),
+                        foto=item.get('foto', ''),
+                        raridade=item.get('raridade', 'Comum'),
+                        valor_formatado=item.get('valor_formatado', '$0/s'),
+                        valor_por_segundo=float(item.get('valor_por_segundo', 0)),
+                        quantidade=int(item.get('quantidade', 1)),
+                        numero_mutacoes=int(item.get('numero_mutacoes', 0)),
+                        favorito=item.get('favorito', False)
+                    )
+                    if 'eventos' in item:
+                        brainrot.set_eventos(item['eventos'])
+                    if 'tags' in item:
+                        brainrot.set_tags(item['tags'])
+                    db.session.add(brainrot)
+                    importados += 1
+                except Exception as e:
+                    erros.append(f"Erro ao importar {item.get('nome', 'item')}: {str(e)}")
+        
+        elif filename.endswith('.csv'):
+            import csv
+            from io import StringIO
+            content = file.read().decode('utf-8')
+            csv_reader = csv.DictReader(StringIO(content))
+            
+            for row in csv_reader:
+                try:
+                    brainrot = Brainrot(
+                        nome=row.get('Nome', row.get('nome', 'Sem nome')),
+                        foto=row.get('Foto', row.get('foto', '')),
+                        raridade=row.get('Raridade', row.get('raridade', 'Comum')),
+                        valor_formatado=row.get('Valor Formatado', row.get('valor_formatado', '$0/s')),
+                        valor_por_segundo=float(row.get('Valor/s', row.get('valor_por_segundo', 0))),
+                        quantidade=int(row.get('Quantidade', row.get('quantidade', 1))),
+                        numero_mutacoes=int(row.get('Mutações', row.get('numero_mutacoes', 0)))
+                    )
+                    if row.get('Eventos'):
+                        eventos = [e.strip() for e in row['Eventos'].split(',')]
+                        brainrot.set_eventos(eventos)
+                    db.session.add(brainrot)
+                    importados += 1
+                except Exception as e:
+                    erros.append(f"Erro ao importar linha: {str(e)}")
+        
+        db.session.commit()
+        return jsonify({
+            'success': True,
+            'importados': importados,
+            'erros': erros
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+# Comparação de Brainrots
+@app.route('/api/brainrots/compare', methods=['POST'])
+@login_required
+def api_compare_brainrots():
+    """Compara múltiplos brainrots"""
+    try:
+        data = request.get_json()
+        ids = data.get('ids', [])
+        if len(ids) < 2 or len(ids) > 3:
+            return jsonify({'success': False, 'error': 'Selecione 2 ou 3 brainrots para comparar'}), 400
+        
+        brainrots = Brainrot.query.filter(Brainrot.id.in_(ids)).all()
+        if len(brainrots) != len(ids):
+            return jsonify({'success': False, 'error': 'Alguns brainrots não foram encontrados'}), 404
+        
+        comparacao = [br.to_dict() for br in brainrots]
+        return jsonify({'success': True, 'comparacao': comparacao})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+# Relatórios em PDF
+@app.route('/api/report/pdf', methods=['GET'])
+@login_required
+def api_generate_pdf_report():
+    """Gera um relatório em PDF"""
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+        from io import BytesIO
+        
+        tipo = request.args.get('tipo', 'brainrots')
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=letter)
+        
+        # Título
+        p.setFont("Helvetica-Bold", 20)
+        p.drawString(100, 750, f"Relatório de {tipo.capitalize()}")
+        
+        if tipo == 'brainrots':
+            brainrots = Brainrot.query.all()
+            y = 700
+            p.setFont("Helvetica", 12)
+            for br in brainrots[:50]:  # Limitar a 50 por página
+                p.drawString(100, y, f"{br.nome} - {br.raridade} - {br.valor_formatado}")
+                y -= 20
+                if y < 50:
+                    p.showPage()
+                    y = 750
+        
+        p.save()
+        buffer.seek(0)
+        
+        from flask import Response
+        return Response(
+            buffer.getvalue(),
+            mimetype='application/pdf',
+            headers={'Content-Disposition': 'attachment; filename=relatorio.pdf'}
+        )
+    except ImportError:
+        return jsonify({'success': False, 'error': 'Biblioteca reportlab não instalada'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
 
 # ==================== EXPORTAÇÃO DE DADOS ====================
 

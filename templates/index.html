@@ -82,23 +82,18 @@
             <h2 class="text-xl font-bold text-gray-800 mb-4">
                 <i class="fas fa-chart-pie mr-2 text-purple-600"></i>Distribuição por Raridade
             </h2>
-            <div class="space-y-3">
+            <div class="h-64">
+                <canvas id="raridadeChart"></canvas>
+            </div>
+            <div class="mt-4 space-y-2">
                 {% set raridades_ordem = ['Comum', 'Raro', 'Épico', 'Lendário', 'Mítico', 'Deus Brainrot', 'Secreto', 'OG'] %}
                 {% for raridade in raridades_ordem %}
                     {% if brainrots_por_raridade.get(raridade, 0) > 0 %}
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3 flex-1">
-                            <span class="inline-block px-3 py-1 rounded text-xs font-medium raridade-{{ raridade.lower().replace(' ', '-') }} min-w-[80px] text-center">
-                                {{ raridade }}
-                            </span>
-                            <div class="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
-                                {% set total = brainrots_por_raridade.values() | sum %}
-                                {% set porcentagem = (brainrots_por_raridade.get(raridade, 0) / total * 100) if total > 0 else 0 %}
-                                <div class="h-full rounded-full raridade-{{ raridade.lower().replace(' ', '-') }}" 
-                                     style="width: {{ porcentagem }}%; transition: width 0.8s ease;"></div>
-                            </div>
-                        </div>
-                        <span class="font-bold text-gray-800 ml-3 min-w-[40px] text-right">{{ brainrots_por_raridade.get(raridade, 0) }}</span>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="inline-block px-3 py-1 rounded text-xs font-medium raridade-{{ raridade.lower().replace(' ', '-') }} min-w-[100px] text-center">
+                            {{ raridade }}
+                        </span>
+                        <span class="font-bold text-gray-800">{{ brainrots_por_raridade.get(raridade, 0) }}</span>
                     </div>
                     {% endif %}
                 {% endfor %}
@@ -112,14 +107,17 @@
             <h2 class="text-xl font-bold text-gray-800 mb-4">
                 <i class="fas fa-star mr-2 text-yellow-500"></i>Top 5 Eventos Mais Comuns
             </h2>
-            <div class="space-y-3">
+            <div class="h-64 mb-4">
+                <canvas id="eventosChart"></canvas>
+            </div>
+            <div class="space-y-2">
                 {% for evento, count in top_eventos %}
-                <div class="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg hover:shadow-md transition-all">
+                <div class="flex items-center justify-between p-2 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg hover:shadow-md transition-all">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                        <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
                             {{ loop.index }}
                         </div>
-                        <span class="font-medium text-gray-800">{{ evento }}</span>
+                        <span class="font-medium text-gray-800 text-sm">{{ evento }}</span>
                     </div>
                     <span class="font-bold text-purple-600">{{ count }}x</span>
                 </div>
@@ -260,13 +258,11 @@
 <script>
     function exportarDados(tipo) {
         if (tipo === 'brainrots') {
-            // Exportar como CSV
             window.location.href = '/api/export/brainrots?format=csv';
             if (window.showToast) {
                 showToast('Exportando brainrots...', 'info', 2000);
             }
         } else if (tipo === 'contas') {
-            // Exportar como CSV
             window.location.href = '/api/export/contas?format=csv';
             if (window.showToast) {
                 showToast('Exportando contas...', 'info', 2000);
@@ -274,26 +270,76 @@
         }
     }
     
-    // Animar barras de progresso quando visíveis
+    // Gráficos
     $(document).ready(function() {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const bars = entry.target.querySelectorAll('[style*="width"]');
-                    bars.forEach(bar => {
-                        const width = bar.style.width;
-                        bar.style.width = '0%';
-                        setTimeout(() => {
-                            bar.style.width = width;
-                        }, 100);
-                    });
+        {% if brainrots_por_raridade %}
+        // Gráfico de Pizza - Raridades
+        const raridadeCtx = document.getElementById('raridadeChart');
+        if (raridadeCtx) {
+            const raridadesData = {
+                labels: {{ brainrots_por_raridade.keys() | list | tojson }},
+                datasets: [{
+                    data: {{ brainrots_por_raridade.values() | list | tojson }},
+                    backgroundColor: [
+                        '#22c55e', '#3b82f6', '#a855f7', '#fbbf24',
+                        '#ef4444', 'linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)',
+                        '#000000', '#fbbf24'
+                    ]
+                }]
+            };
+            new Chart(raridadeCtx, {
+                type: 'pie',
+                data: raridadesData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: { size: 12 }
+                            }
+                        }
+                    }
                 }
             });
-        });
+        }
+        {% endif %}
         
-        document.querySelectorAll('.card').forEach(card => {
-            observer.observe(card);
-        });
+        {% if top_eventos %}
+        // Gráfico de Barras - Eventos
+        const eventosCtx = document.getElementById('eventosChart');
+        if (eventosCtx) {
+            const eventosData = {
+                labels: {{ top_eventos | map(attribute=0) | list | tojson }},
+                datasets: [{
+                    label: 'Quantidade',
+                    data: {{ top_eventos | map(attribute=1) | list | tojson }},
+                    backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                    borderColor: 'rgba(139, 92, 246, 1)',
+                    borderWidth: 2
+                }]
+            };
+            new Chart(eventosCtx, {
+                type: 'bar',
+                data: eventosData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        }
+        {% endif %}
     });
 </script>
 {% endblock %}
