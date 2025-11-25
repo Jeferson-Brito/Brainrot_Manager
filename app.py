@@ -80,8 +80,13 @@ def init_db():
                         db.session.execute(text("ALTER TABLE brainrot ADD COLUMN IF NOT EXISTS favorito BOOLEAN DEFAULT FALSE"))
                         db.session.execute(text("ALTER TABLE brainrot ADD COLUMN IF NOT EXISTS tags TEXT"))
                         db.session.execute(text("ALTER TABLE conta ADD COLUMN IF NOT EXISTS espacos INTEGER DEFAULT 0"))
+                        # Criar tabelas dos novos modelos se não existirem
+                        try:
+                            db.create_all()
+                        except:
+                            pass
                         db.session.commit()
-                        print("Colunas adicionadas com sucesso!")
+                        print("Colunas e tabelas adicionadas com sucesso!")
                     except Exception as col_error:
                         print(f"Aviso ao adicionar colunas: {col_error}")
                         db.session.rollback()

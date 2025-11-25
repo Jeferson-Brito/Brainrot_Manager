@@ -190,4 +190,96 @@ def create_models(db):
                 'descricao': self.descricao
             }
     
-    return brainrot_conta, Brainrot, Conta, CampoPersonalizado
+    class HistoricoAlteracao(db.Model):
+        """Modelo para armazenar histórico de alterações"""
+        __tablename__ = 'historico_alteracao'
+        
+        id = db.Column(db.Integer, primary_key=True)
+        tipo_entidade = db.Column(db.String(50), nullable=False)  # 'brainrot' ou 'conta'
+        entidade_id = db.Column(db.Integer, nullable=False)
+        acao = db.Column(db.String(50), nullable=False)  # 'criar', 'editar', 'excluir'
+        dados_anteriores = db.Column(db.Text)  # JSON com dados anteriores
+        dados_novos = db.Column(db.Text)  # JSON com dados novos
+        data_alteracao = db.Column(db.DateTime, default=datetime.utcnow)
+        
+        def to_dict(self):
+            """Converte o histórico para dicionário"""
+            return {
+                'id': self.id,
+                'tipo_entidade': self.tipo_entidade,
+                'entidade_id': self.entidade_id,
+                'acao': self.acao,
+                'dados_anteriores': json.loads(self.dados_anteriores) if self.dados_anteriores else None,
+                'dados_novos': json.loads(self.dados_novos) if self.dados_novos else None,
+                'data_alteracao': self.data_alteracao.isoformat() if self.data_alteracao else None
+            }
+    
+    class FiltroSalvo(db.Model):
+        """Modelo para armazenar filtros salvos"""
+        __tablename__ = 'filtro_salvo'
+        
+        id = db.Column(db.Integer, primary_key=True)
+        nome = db.Column(db.String(200), nullable=False)
+        tipo = db.Column(db.String(50), nullable=False)  # 'brainrot' ou 'conta'
+        filtros = db.Column(db.Text)  # JSON com os filtros
+        data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+        
+        def get_filtros(self):
+            """Retorna os filtros como dicionário"""
+            if self.filtros:
+                try:
+                    return json.loads(self.filtros)
+                except:
+                    return {}
+            return {}
+        
+        def set_filtros(self, filtros_dict):
+            """Define os filtros a partir de um dicionário"""
+            self.filtros = json.dumps(filtros_dict)
+        
+        def to_dict(self):
+            """Converte o filtro salvo para dicionário"""
+            return {
+                'id': self.id,
+                'nome': self.nome,
+                'tipo': self.tipo,
+                'filtros': self.get_filtros(),
+                'data_criacao': self.data_criacao.isoformat() if self.data_criacao else None
+            }
+    
+    class Meta(db.Model):
+        """Modelo para armazenar metas/objetivos"""
+        __tablename__ = 'meta'
+        
+        id = db.Column(db.Integer, primary_key=True)
+        nome = db.Column(db.String(200), nullable=False)
+        descricao = db.Column(db.Text)
+        tipo = db.Column(db.String(50), nullable=False)  # 'raridade', 'quantidade', 'valor', 'evento'
+        valor_alvo = db.Column(db.Integer, nullable=False)
+        valor_atual = db.Column(db.Integer, default=0)
+        concluida = db.Column(db.Boolean, default=False)
+        data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+        data_conclusao = db.Column(db.DateTime)
+        
+        def get_progresso(self):
+            """Retorna o progresso em porcentagem"""
+            if self.valor_alvo == 0:
+                return 0
+            return min(100, int((self.valor_atual / self.valor_alvo) * 100))
+        
+        def to_dict(self):
+            """Converte a meta para dicionário"""
+            return {
+                'id': self.id,
+                'nome': self.nome,
+                'descricao': self.descricao,
+                'tipo': self.tipo,
+                'valor_alvo': self.valor_alvo,
+                'valor_atual': self.valor_atual,
+                'concluida': self.concluida,
+                'progresso': self.get_progresso(),
+                'data_criacao': self.data_criacao.isoformat() if self.data_criacao else None,
+                'data_conclusao': self.data_conclusao.isoformat() if self.data_conclusao else None
+            }
+    
+    return brainrot_conta, Brainrot, Conta, CampoPersonalizado, HistoricoAlteracao, FiltroSalvo, Meta
