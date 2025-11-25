@@ -146,12 +146,30 @@ def index():
     brainrots_com_valor.sort(key=lambda x: x[1], reverse=True)
     top_10_brainrots = [br[0] for br in brainrots_com_valor[:10]]
     
+    # Estatísticas por raridade
+    brainrots_por_raridade = defaultdict(int)
+    for br in todos_brainrots:
+        brainrots_por_raridade[br.raridade] += 1
+    
+    # Estatísticas de eventos
+    eventos_count = defaultdict(int)
+    for br in todos_brainrots:
+        eventos = br.get_eventos()
+        if eventos:
+            for evento in eventos:
+                eventos_count[evento] += 1
+    
+    # Top 5 eventos mais comuns
+    top_eventos = sorted(eventos_count.items(), key=lambda x: x[1], reverse=True)[:5]
+    
     return render_template('index.html',
                          total_contas=total_contas,
                          total_brainrots=total_brainrots,
                          valor_total_por_segundo=valor_total_por_segundo,
                          brainrots_recentes=brainrots_recentes,
-                         top_10_brainrots=top_10_brainrots)
+                         top_10_brainrots=top_10_brainrots,
+                         brainrots_por_raridade=dict(brainrots_por_raridade),
+                         top_eventos=top_eventos)
 
 @app.route('/brainrots')
 @login_required
@@ -798,4 +816,84 @@ def upload_file():
 def uploaded_file(filename):
     """Serve arquivos enviados"""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+# ==================== EXPORTAÇÃO DE DADOS ====================
+
+@app.route('/api/export/brainrots', methods=['GET'])
+@login_required
+def api_export_brainrots():
+    """Exporta todos os brainrots em JSON ou CSV"""
+    format_type = request.args.get('format', 'json').lower()
+    brainrots = Brainrot.query.all()
+    
+    if format_type == 'csv':
+        import csv
+        from io import StringIO
+        
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Cabeçalho
+        writer.writerow(['ID', 'Nome', 'Raridade', 'Valor/s', 'Valor Formatado', 'Quantidade', 
+                        'Mutações', 'Eventos', 'Contas', 'Data Criação'])
+        
+        # Dados
+        for br in brainrots:
+            eventos = ', '.join(br.get_eventos()) if br.get_eventos() else 'Nenhum'
+            contas = ', '.join([c.nome for c in br.contas.all()]) if br.contas.all() else 'Nenhuma'
+            writer.writerow([
+                br.id, br.nome, br.raridade, br.valor_por_segundo, br.valor_formatado or '',
+                br.quantidade, br.numero_mutacoes, eventos, contas,
+                br.data_criacao.strftime('%Y-%m-%d %H:%M:%S') if br.data_criacao else ''
+            ])
+        
+        output.seek(0)
+        from flask import Response
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=brainrots_export.csv'}
+        )
+    else:
+        # JSON
+        data = [br.to_dict() for br in brainrots]
+        return jsonify(data)
+
+@app.route('/api/export/contas', methods=['GET'])
+@login_required
+def api_export_contas():
+    """Exporta todas as contas em JSON ou CSV"""
+    format_type = request.args.get('format', 'json').lower()
+    contas = Conta.query.all()
+    
+    if format_type == 'csv':
+        import csv
+        from io import StringIO
+        
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Cabeçalho
+        writer.writerow(['ID', 'Nome', 'Roblox ID', 'Total Brainrots', 'Espaços Totais', 
+                        'Espaços Ocupados', 'Espaços Livres', 'Data Criação'])
+        
+        # Dados
+        for conta in contas:
+            writer.writerow([
+                conta.id, conta.nome, conta.roblox_id or '', len(conta.brainrots.all()),
+                conta.espacos or 0, conta.get_espacos_ocupados(), conta.get_espacos_livres() or 'Ilimitado',
+                conta.data_criacao.strftime('%Y-%m-%d %H:%M:%S') if conta.data_criacao else ''
+            ])
+        
+        output.seek(0)
+        from flask import Response
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=contas_export.csv'}
+        )
+    else:
+        # JSON
+        data = [conta.to_dict() for conta in contas]
+        return jsonify(data)
 

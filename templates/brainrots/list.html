@@ -246,15 +246,15 @@
         <p class="text-white mt-4">Carregando Brainrots...</p>
     </div>
     
-    <!-- Empty State -->
-    <div id="empty-state" class="hidden card rounded-xl shadow-xl p-12 text-center">
-        <i class="fas fa-cube text-6xl text-gray-400 mb-4"></i>
-        <h3 class="text-2xl font-bold text-gray-800 mb-2">Nenhum Brainrot encontrado</h3>
-        <p class="text-gray-600 mb-6">Comece adicionando seu primeiro Brainrot!</p>
-        <a href="{{ url_for('brainrot_new') }}" class="btn-primary text-white px-6 py-3 rounded-lg font-medium inline-block hover:no-underline">
-            <i class="fas fa-plus mr-2"></i>Criar Brainrot
-        </a>
-    </div>
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden card rounded-xl shadow-xl p-12 text-center animate__animated animate__fadeIn">
+            <i class="fas fa-cube text-6xl text-gray-400 mb-4 animate__animated animate__bounceIn"></i>
+            <h3 class="text-2xl font-bold text-gray-800 mb-2">Nenhum Brainrot encontrado</h3>
+            <p class="text-gray-600 mb-6">Comece adicionando seu primeiro Brainrot!</p>
+            <a href="{{ url_for('brainrot_new') }}" class="btn-primary text-white px-6 py-3 rounded-lg font-medium inline-block hover:no-underline pulse-glow">
+                <i class="fas fa-plus mr-2"></i>Criar Brainrot
+            </a>
+        </div>
 </div>
 {% endblock %}
 
@@ -317,7 +317,7 @@
                 html += `
                     <div class="brainrot-card card rounded-xl shadow-xl p-4 animate__animated animate__fadeInUp card-raridade-${brainrot.raridade.toLowerCase().replace(/\s+/g, '-')}" 
                          data-id="${brainrot.id}"
-                         style="animation-delay: ${index * 0.05}s"
+                         style="animation-delay: ${index * 0.05}s; opacity: 0;"
                          onclick="if (!window.isDragging) window.location.href='${'/brainrots/' + brainrot.id + '/editar'}'">
                         <div class="flex items-start space-x-3 mb-3">
                             ${brainrot.foto && brainrot.foto.startsWith('http') ? 
@@ -367,6 +367,20 @@
             });
             
             $('#brainrots-container').html(html);
+            
+            // Animar entrada dos cards
+            setTimeout(() => {
+                $('#brainrots-container .brainrot-card').each(function(index) {
+                    $(this).css({
+                        'opacity': '0',
+                        'transform': 'translateY(20px) scale(0.95)'
+                    }).delay(index * 50).animate({
+                        opacity: 1
+                    }, 400, function() {
+                        $(this).css('transform', 'translateY(0) scale(1)');
+                    });
+                });
+            }, 100);
             
             // Inicializar SortableJS para drag-and-drop apenas se o modo de organização estiver ativo
             if (modoOrganizacaoAtivo) {
@@ -497,10 +511,17 @@
                 url: '/api/brainrots/' + id,
                 type: 'DELETE',
                 success: function() {
+                    if (window.showToast) {
+                        showToast('Brainrot excluído com sucesso!', 'success');
+                    }
                     carregarBrainrots();
                 },
                 error: function() {
-                    alert('Erro ao excluir Brainrot');
+                    if (window.showToast) {
+                        showToast('Erro ao excluir Brainrot', 'error');
+                    } else {
+                        alert('Erro ao excluir Brainrot');
+                    }
                 }
             });
         }

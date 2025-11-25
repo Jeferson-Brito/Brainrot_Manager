@@ -47,19 +47,88 @@
     </div>
     
     <!-- Botões de Ação Rápida -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <a href="{{ url_for('brainrot_new') }}" class="card rounded-xl shadow-xl p-6 text-center btn-primary text-white hover:no-underline animate__animated animate__fadeInLeft">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <a href="{{ url_for('brainrot_new') }}" class="card rounded-xl shadow-xl p-6 text-center btn-primary text-white hover:no-underline animate__animated animate__fadeInLeft pulse-glow">
             <i class="fas fa-plus-circle text-4xl mb-3"></i>
             <h3 class="text-xl font-bold mb-2">Novo Brainrot</h3>
-            <p class="opacity-90">Adicione um novo Brainrot à sua coleção</p>
+            <p class="opacity-90 text-sm">Adicione um novo Brainrot</p>
         </a>
         
-        <a href="{{ url_for('conta_new') }}" class="card rounded-xl shadow-xl p-6 text-center btn-primary text-white hover:no-underline animate__animated animate__fadeInRight">
+        <a href="{{ url_for('conta_new') }}" class="card rounded-xl shadow-xl p-6 text-center btn-primary text-white hover:no-underline animate__animated animate__fadeInRight pulse-glow">
             <i class="fas fa-user-plus text-4xl mb-3"></i>
             <h3 class="text-xl font-bold mb-2">Nova Conta</h3>
-            <p class="opacity-90">Cadastre uma nova conta Roblox</p>
+            <p class="opacity-90 text-sm">Cadastre uma nova conta</p>
         </a>
+        
+        <button onclick="exportarDados('brainrots')" class="card rounded-xl shadow-xl p-6 text-center bg-gradient-to-br from-green-500 to-green-600 text-white hover:no-underline animate__animated animate__fadeInUp cursor-pointer border-0 w-full">
+            <i class="fas fa-download text-4xl mb-3"></i>
+            <h3 class="text-xl font-bold mb-2">Exportar Brainrots</h3>
+            <p class="opacity-90 text-sm">Baixe seus dados</p>
+        </button>
+        
+        <button onclick="exportarDados('contas')" class="card rounded-xl shadow-xl p-6 text-center bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:no-underline animate__animated animate__fadeInUp cursor-pointer border-0 w-full">
+            <i class="fas fa-file-export text-4xl mb-3"></i>
+            <h3 class="text-xl font-bold mb-2">Exportar Contas</h3>
+            <p class="opacity-90 text-sm">Baixe seus dados</p>
+        </button>
     </div>
+    
+    <!-- Estatísticas Avançadas -->
+    {% if brainrots_por_raridade or top_eventos %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Gráfico de Raridades -->
+        {% if brainrots_por_raridade %}
+        <div class="card rounded-xl shadow-xl p-6 animate__animated animate__fadeInUp" style="animation-delay: 0.5s">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-chart-pie mr-2 text-purple-600"></i>Distribuição por Raridade
+            </h2>
+            <div class="space-y-3">
+                {% set raridades_ordem = ['Comum', 'Raro', 'Épico', 'Lendário', 'Mítico', 'Deus Brainrot', 'Secreto', 'OG'] %}
+                {% for raridade in raridades_ordem %}
+                    {% if brainrots_por_raridade.get(raridade, 0) > 0 %}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3 flex-1">
+                            <span class="inline-block px-3 py-1 rounded text-xs font-medium raridade-{{ raridade.lower().replace(' ', '-') }} min-w-[80px] text-center">
+                                {{ raridade }}
+                            </span>
+                            <div class="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+                                {% set total = brainrots_por_raridade.values() | sum %}
+                                {% set porcentagem = (brainrots_por_raridade.get(raridade, 0) / total * 100) if total > 0 else 0 %}
+                                <div class="h-full rounded-full raridade-{{ raridade.lower().replace(' ', '-') }}" 
+                                     style="width: {{ porcentagem }}%; transition: width 0.8s ease;"></div>
+                            </div>
+                        </div>
+                        <span class="font-bold text-gray-800 ml-3 min-w-[40px] text-right">{{ brainrots_por_raridade.get(raridade, 0) }}</span>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Top Eventos -->
+        {% if top_eventos %}
+        <div class="card rounded-xl shadow-xl p-6 animate__animated animate__fadeInUp" style="animation-delay: 0.6s">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-star mr-2 text-yellow-500"></i>Top 5 Eventos Mais Comuns
+            </h2>
+            <div class="space-y-3">
+                {% for evento, count in top_eventos %}
+                <div class="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg hover:shadow-md transition-all">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                            {{ loop.index }}
+                        </div>
+                        <span class="font-medium text-gray-800">{{ evento }}</span>
+                    </div>
+                    <span class="font-bold text-purple-600">{{ count }}x</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
     
     <!-- Top 10 Brainrots que Mais Pagam -->
     {% if top_10_brainrots %}
@@ -185,5 +254,47 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function exportarDados(tipo) {
+        if (tipo === 'brainrots') {
+            // Exportar como CSV
+            window.location.href = '/api/export/brainrots?format=csv';
+            if (window.showToast) {
+                showToast('Exportando brainrots...', 'info', 2000);
+            }
+        } else if (tipo === 'contas') {
+            // Exportar como CSV
+            window.location.href = '/api/export/contas?format=csv';
+            if (window.showToast) {
+                showToast('Exportando contas...', 'info', 2000);
+            }
+        }
+    }
+    
+    // Animar barras de progresso quando visíveis
+    $(document).ready(function() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const bars = entry.target.querySelectorAll('[style*="width"]');
+                    bars.forEach(bar => {
+                        const width = bar.style.width;
+                        bar.style.width = '0%';
+                        setTimeout(() => {
+                            bar.style.width = width;
+                        }, 100);
+                    });
+                }
+            });
+        });
+        
+        document.querySelectorAll('.card').forEach(card => {
+            observer.observe(card);
+        });
+    });
+</script>
 {% endblock %}
 
