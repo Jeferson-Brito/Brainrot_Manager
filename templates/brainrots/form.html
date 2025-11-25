@@ -625,9 +625,13 @@
             eventosSelecionados.push($(this).val());
         });
         
+        // Garantir que foto seja sempre uma string (mesmo se vazio)
+        const fotoValue = $('#foto-url').val();
+        const fotoTrimmed = fotoValue ? fotoValue.trim() : '';
+        
         const dados = {
             nome: $('#nome').val(),
-            foto: $('#foto-url').val().trim(),
+            foto: fotoTrimmed,
             raridade: $('#raridade').val(),
             valor_formatado: valorFormatado,
             valor_por_segundo: parseFloat(valorNumero) || 0,  // Mantido para compatibilidade
