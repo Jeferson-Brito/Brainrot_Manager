@@ -556,7 +556,22 @@ def api_brainrot_update(id):
         foto_value = data.get('foto', '')
         if foto_value is None:
             foto_value = ''
-        brainrot.foto = foto_value.strip() if foto_value else ''
+        foto_value = foto_value.strip() if foto_value else ''
+        
+        # Se a foto foi atualizada e não está vazia, atualizar em todas as instâncias do mesmo Brainrot
+        if foto_value and foto_value != brainrot.foto:
+            # Buscar todas as instâncias com o mesmo nome
+            nome_atual = brainrot.nome
+            outras_instancias = Brainrot.query.filter(
+                Brainrot.nome == nome_atual,
+                Brainrot.id != brainrot.id
+            ).all()
+            
+            # Atualizar foto em todas as outras instâncias
+            for instancia in outras_instancias:
+                instancia.foto = foto_value
+        
+        brainrot.foto = foto_value
         brainrot.raridade = data.get('raridade', brainrot.raridade)
         
         # Atualizar valor formatado
