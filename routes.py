@@ -426,9 +426,15 @@ def api_brainrot_create():
             valor_numero = data.get('valor_por_segundo', 0)
             valor_formatado = f'${valor_numero}/s'
         
+        # Garantir que foto seja string (mesmo se vazio)
+        foto_value = data.get('foto', '')
+        if foto_value is None:
+            foto_value = ''
+        foto_value = foto_value.strip() if foto_value else ''
+        
         brainrot = Brainrot(
             nome=data.get('nome'),
-            foto=data.get('foto', ''),
+            foto=foto_value,
             raridade=data.get('raridade', 'Comum'),
             valor_formatado=valor_formatado,
             valor_por_segundo=float(data.get('valor_por_segundo', 0)),
@@ -489,7 +495,11 @@ def api_brainrot_update(id):
         data = request.get_json()
         
         brainrot.nome = data.get('nome', brainrot.nome)
-        brainrot.foto = data.get('foto', brainrot.foto)
+        # Atualizar foto - garantir que seja string (mesmo se vazio)
+        foto_value = data.get('foto', '')
+        if foto_value is None:
+            foto_value = ''
+        brainrot.foto = foto_value.strip() if foto_value else ''
         brainrot.raridade = data.get('raridade', brainrot.raridade)
         
         # Atualizar valor formatado

@@ -72,7 +72,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">URL da Imagem</label>
                     <input type="url" id="foto-url" name="foto" 
-                           value="{{ brainrot.foto if brainrot else '' }}"
+                           value="{% if brainrot and brainrot.foto %}{{ brainrot.foto }}{% else %}{% endif %}"
                            class="input-modern w-full px-4 py-3 rounded-lg focus:outline-none"
                            placeholder="https://exemplo.com/imagem.png">
                     <p class="text-xs text-gray-500 mt-1">
@@ -387,9 +387,13 @@
             atualizarPreviewImagem(url);
         });
         
-        // Carregar preview se já houver URL
+        // Carregar preview se já houver URL e garantir que o campo tenha o valor
         {% if brainrot and brainrot.foto %}
-        atualizarPreviewImagem("{{ brainrot.foto }}");
+        const fotoUrl = "{{ brainrot.foto }}";
+        if (fotoUrl && fotoUrl.trim() !== '') {
+            $('#foto-url').val(fotoUrl);
+            atualizarPreviewImagem(fotoUrl);
+        }
         {% endif %}
         
         // Pré-selecionar conta se vier da página de detalhes
