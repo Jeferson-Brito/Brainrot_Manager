@@ -382,13 +382,21 @@
         });
         
         // Carregar preview se já houver URL e garantir que o campo tenha o valor
-        {% if brainrot and brainrot.foto %}
-        const fotoUrl = "{{ brainrot.foto }}";
-        if (fotoUrl && fotoUrl.trim() !== '') {
-            $('#foto-url').val(fotoUrl);
-            atualizarPreviewImagem(fotoUrl);
+        // Primeiro verificar se o campo já tem valor (do atributo value do HTML)
+        let fotoUrl = $('#foto-url').val();
+        
+        // Se não tiver valor no campo, tentar carregar do template
+        if (!fotoUrl || fotoUrl.trim() === '') {
+            {% if brainrot and brainrot.foto %}
+            fotoUrl = "{{ brainrot.foto|e }}";
+            {% endif %}
         }
-        {% endif %}
+        
+        // Se encontrou uma URL, definir no campo e atualizar preview
+        if (fotoUrl && fotoUrl.trim() !== '') {
+            $('#foto-url').val(fotoUrl.trim());
+            atualizarPreviewImagem(fotoUrl.trim());
+        }
         
         // Pré-selecionar conta se vier da página de detalhes
         {% if conta_pre_selecionada %}
