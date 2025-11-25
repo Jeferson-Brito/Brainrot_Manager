@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#764ba2">
+    <meta name="description" content="Sistema de gerenciamento de Brainrots do Roblox">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <title>{% block title %}Brainrot Manager{% endblock %}</title>
     
     <!-- Tailwind CSS -->
@@ -781,6 +784,19 @@
         // Expor funções globalmente
         window.showToast = showToast;
         window.toggleTheme = toggleTheme;
+        
+        // Registrar Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/service-worker.js')
+                    .then((registration) => {
+                        console.log('Service Worker registrado:', registration);
+                    })
+                    .catch((error) => {
+                        console.log('Erro ao registrar Service Worker:', error);
+                    });
+            });
+        }
     </script>
     
     {% block extra_js %}{% endblock %}

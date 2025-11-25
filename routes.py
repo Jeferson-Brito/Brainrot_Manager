@@ -875,6 +875,11 @@ def uploaded_file(filename):
     """Serve arquivos enviados"""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    """Serve arquivos estáticos"""
+    return send_from_directory('static', filename)
+
 # ==================== FUNCIONALIDADES AVANÇADAS ====================
 
 # Sistema de Favoritos
