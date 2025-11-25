@@ -71,8 +71,8 @@
                 <!-- Foto (URL) -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">URL da Imagem</label>
-                    <input type="url" id="foto-url" name="foto" 
-                           value="{% if brainrot and brainrot.foto %}{{ brainrot.foto }}{% else %}{% endif %}"
+                    <input type="text" id="foto-url" name="foto" 
+                           value="{% if brainrot and brainrot.foto %}{{ brainrot.foto|e }}{% endif %}"
                            class="input-modern w-full px-4 py-3 rounded-lg focus:outline-none"
                            placeholder="https://exemplo.com/imagem.png">
                     <p class="text-xs text-gray-500 mt-1">
@@ -81,16 +81,10 @@
                     </p>
                     <div class="mt-4 text-center">
                         <div id="preview-container" class="inline-block">
-                            {% if brainrot and brainrot.foto %}
-                            <img id="preview-image" src="{{ brainrot.foto }}" 
+                            <img id="preview-image" src="{% if brainrot and brainrot.foto %}{{ brainrot.foto|e }}{% endif %}" 
                                  alt="Preview" 
-                                 class="max-w-full h-48 w-48 object-cover rounded-lg border-2 border-gray-300 mx-auto"
+                                 class="{% if not brainrot or not brainrot.foto %}hidden{% endif %} max-w-full h-48 w-48 object-cover rounded-lg border-2 border-gray-300 mx-auto"
                                  loading="lazy">
-                            {% else %}
-                            <img id="preview-image" src="" alt="Preview" 
-                                 class="hidden max-w-full h-48 w-48 object-cover rounded-lg border-2 border-gray-300 mx-auto"
-                                 loading="lazy">
-                            {% endif %}
                             <div id="preview-placeholder" class="{% if brainrot and brainrot.foto %}hidden{% endif %} w-48 h-48 bg-gray-200 rounded-lg border-2 border-gray-300 mx-auto flex items-center justify-center">
                                 <div class="text-center">
                                     <i class="fas fa-image text-4xl text-gray-400 mb-2"></i>
