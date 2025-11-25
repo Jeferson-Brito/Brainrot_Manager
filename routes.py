@@ -501,7 +501,10 @@ def api_brainrot_create():
         
         db.session.add(brainrot)
         
-        # Registrar histórico
+        # Fazer flush para obter o ID antes de registrar histórico
+        db.session.flush()
+        
+        # Registrar histórico (agora brainrot.id já está disponível)
         historico = HistoricoAlteracao(
             tipo_entidade='brainrot',
             entidade_id=brainrot.id,
@@ -518,6 +521,7 @@ def api_brainrot_create():
                 # Verificar se todas as contas têm espaço disponível
                 contas_sem_espaco = [c.nome for c in contas if not c.tem_espaco_disponivel()]
                 if contas_sem_espaco:
+                    db.session.rollback()
                     return jsonify({
                         'success': False, 
                         'error': f'As seguintes contas estão cheias: {", ".join(contas_sem_espaco)}'
@@ -691,6 +695,16 @@ def api_brainrot_delete(id):
     """API para deletar Brainrot"""
     try:
         brainrot = Brainrot.query.get_or_404(id)
+        
+        # Registrar histórico ANTES de deletar
+        historico = HistoricoAlteracao(
+            tipo_entidade='brainrot',
+            entidade_id=brainrot.id,
+            acao='excluir',
+            dados_anteriores=json.dumps(brainrot.to_dict())
+        )
+        db.session.add(historico)
+        
         db.session.delete(brainrot)
         db.session.commit()
         return jsonify({'success': True})
