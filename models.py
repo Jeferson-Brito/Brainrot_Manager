@@ -110,7 +110,7 @@ def create_models(db):
             return {
                 'id': self.id,
                 'nome': self.nome,
-                'foto': self.foto,
+                'foto': self.foto if self.foto else '',
                 'raridade': self.raridade,
                 'valor_por_segundo': self.valor_por_segundo,
                 'valor_formatado': self.valor_formatado or f'${self.valor_por_segundo}/s',

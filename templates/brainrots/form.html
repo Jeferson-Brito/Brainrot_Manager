@@ -707,6 +707,8 @@
         const fotoValue = $('#foto-url').val();
         const fotoTrimmed = fotoValue ? fotoValue.trim() : '';
         
+        console.log('DEBUG: Enviando foto:', fotoTrimmed);
+        
         const dados = {
             nome: $('#nome').val(),
             foto: fotoTrimmed,
@@ -763,11 +765,11 @@
                     }
                     
                     if (contaId) {
-                        // Redirecionar para a página da conta
-                        window.location.href = '/contas/' + contaId;
+                        // Redirecionar para a página da conta com cache-busting
+                        window.location.href = '/contas/' + contaId + '?t=' + Date.now();
                     } else {
-                        // Redirecionar para a lista de brainrots
-                        window.location.href = '/brainrots';
+                        // Redirecionar para a lista de brainrots com cache-busting
+                        window.location.href = '/brainrots?t=' + Date.now();
                     }
                 }
             },

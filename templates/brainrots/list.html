@@ -397,7 +397,14 @@
         params.append('valor_max', $('#valor_max').val());
         params.append('evento', $('#evento').val());
         
-        $.get('/api/brainrots?' + params.toString(), function(data) {
+        // Adicionar timestamp para evitar cache
+        params.append('_t', Date.now());
+        
+        $.ajax({
+            url: '/api/brainrots?' + params.toString(),
+            method: 'GET',
+            cache: false,
+            success: function(data) {
             $('#loading').hide();
             
             if (data.length === 0) {
@@ -418,9 +425,9 @@
                          style="animation-delay: ${index * 0.05}s; opacity: 0;"
                          onclick="if (!window.isDragging) window.location.href='${'/brainrots/' + brainrot.id + '/editar'}'">
                         <div class="flex items-start space-x-3 mb-3">
-                            ${brainrot.foto && brainrot.foto.startsWith('http') ? 
-                                `<img src="${brainrot.foto}" alt="${brainrot.nome}" class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg flex-shrink-0" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" onload="if(this.nextElementSibling) this.nextElementSibling.style.display='none';"><div class="w-16 h-16 md:w-20 md:h-20 bg-gray-300 rounded-lg items-center justify-center flex-shrink-0 hidden"><i class="fas fa-cube text-gray-500 text-lg md:text-xl"></i></div>` :
-                                brainrot.foto && !brainrot.foto.startsWith('http') ?
+                            ${brainrot.foto && brainrot.foto.trim() && brainrot.foto.startsWith('http') ? 
+                                `<img src="${brainrot.foto.trim()}" alt="${brainrot.nome}" class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg flex-shrink-0" loading="lazy" crossorigin="anonymous" referrerpolicy="no-referrer" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" onload="if(this.nextElementSibling) this.nextElementSibling.style.display='none';"><div class="w-16 h-16 md:w-20 md:h-20 bg-gray-300 rounded-lg items-center justify-center flex-shrink-0 hidden"><i class="fas fa-cube text-gray-500 text-lg md:text-xl"></i></div>` :
+                                brainrot.foto && brainrot.foto.trim() && !brainrot.foto.startsWith('http') ?
                                 `<img src="/uploads/${brainrot.foto.split('/').pop()}" alt="${brainrot.nome}" class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg flex-shrink-0" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" onload="if(this.nextElementSibling) this.nextElementSibling.style.display='none';"><div class="w-16 h-16 md:w-20 md:h-20 bg-gray-300 rounded-lg items-center justify-center flex-shrink-0 hidden"><i class="fas fa-cube text-gray-500 text-lg md:text-xl"></i></div>` :
                                 `<div class="w-16 h-16 md:w-20 md:h-20 bg-gray-300 rounded-lg flex items-center justify-center flex-shrink-0">
                                     <i class="fas fa-cube text-gray-500 text-lg md:text-xl"></i>
