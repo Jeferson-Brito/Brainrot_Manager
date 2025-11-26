@@ -125,10 +125,6 @@ def index():
     total_contas = Conta.query.count()
     total_brainrots = Brainrot.query.count()
     
-    # Calcular valor total por segundo
-    brainrots = Brainrot.query.all()
-    valor_total_por_segundo = sum(br.valor_por_segundo * br.quantidade for br in brainrots)
-    
     # Brainrots recentes
     brainrots_recentes = Brainrot.query.order_by(Brainrot.data_criacao.desc()).limit(5).all()
     
@@ -165,7 +161,6 @@ def index():
     return render_template('index.html',
                          total_contas=total_contas,
                          total_brainrots=total_brainrots,
-                         valor_total_por_segundo=valor_total_por_segundo,
                          brainrots_recentes=brainrots_recentes,
                          top_10_brainrots=top_10_brainrots,
                          brainrots_por_raridade=dict(brainrots_por_raridade),
@@ -364,14 +359,36 @@ def api_brainrots_list():
         'OG': 8
     }
     
-    brainrots = query.all()
+    brainrots_filtrados = query.all()
     
-    # Ordenar: primeiro por raridade, depois por ordem personalizada
-    brainrots_ordenados = sorted(brainrots, key=lambda br: (
-        ordem_raridades.get(br.raridade, 0),
-        getattr(br, 'ordem', 0),  # Usar getattr para evitar erro se ordem não existir
-        br.data_criacao
-    ))
+    # Se houver filtros aplicados, buscar todas as instâncias dos brainrots que passaram no filtro
+    tem_filtros = any([
+        busca, raridade, valor_min is not None, valor_max is not None, valor_formato,
+        quantidade_min is not None, quantidade_max is not None,
+        mutacoes_min is not None, mutacoes_max is not None,
+        evento, favorito, tag, conta_id
+    ])
+    
+    if tem_filtros and brainrots_filtrados:
+        # Obter os nomes únicos dos brainrots que passaram no filtro
+        nomes_filtrados = set(br.nome for br in brainrots_filtrados)
+        
+        # Buscar TODAS as instâncias dos brainrots com esses nomes (incluindo as que não passaram no filtro)
+        brainrots_completos = Brainrot.query.filter(Brainrot.nome.in_(nomes_filtrados)).all()
+        
+        # Ordenar: primeiro por raridade, depois por ordem personalizada
+        brainrots_ordenados = sorted(brainrots_completos, key=lambda br: (
+            ordem_raridades.get(br.raridade, 0),
+            getattr(br, 'ordem', 0),
+            br.data_criacao
+        ))
+    else:
+        # Sem filtros, usar todos os brainrots normalmente
+        brainrots_ordenados = sorted(brainrots_filtrados, key=lambda br: (
+            ordem_raridades.get(br.raridade, 0),
+            getattr(br, 'ordem', 0),
+            br.data_criacao
+        ))
     
     # Agrupar brainrots por nome para calcular ranges de valores
     brainrots_por_nome = defaultdict(list)

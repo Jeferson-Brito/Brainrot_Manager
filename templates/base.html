@@ -537,8 +537,38 @@
         body.dark-mode .card h1,
         body.dark-mode .card h2,
         body.dark-mode .card h3,
-        body.dark-mode .card p {
-            color: #e5e7eb;
+        body.dark-mode .card h4,
+        body.dark-mode .card h5,
+        body.dark-mode .card h6,
+        body.dark-mode .card p,
+        body.dark-mode .card span,
+        body.dark-mode .card div,
+        body.dark-mode .card label {
+            color: #e5e7eb !important;
+        }
+        
+        body.dark-mode .text-gray-600,
+        body.dark-mode .text-gray-700,
+        body.dark-mode .text-gray-800,
+        body.dark-mode .text-gray-900 {
+            color: #e5e7eb !important;
+        }
+        
+        body.dark-mode .bg-gray-50,
+        body.dark-mode .bg-gray-100,
+        body.dark-mode .bg-gray-200,
+        body.dark-mode .bg-white {
+            background-color: rgba(30, 30, 46, 0.8) !important;
+        }
+        
+        body.dark-mode .bg-gradient-to-r.from-gray-50,
+        body.dark-mode .bg-gradient-to-r.from-white {
+            background: linear-gradient(to right, rgba(30, 30, 46, 0.8), rgba(30, 30, 46, 0.9)) !important;
+        }
+        
+        body.dark-mode .bg-gradient-to-br.from-blue-50,
+        body.dark-mode .bg-gradient-to-br.from-purple-50 {
+            background: linear-gradient(to bottom right, rgba(30, 30, 46, 0.8), rgba(30, 30, 46, 0.9)) !important;
         }
         
         body.dark-mode .input-modern {
@@ -555,6 +585,41 @@
         body.dark-mode .navbar-gradient {
             background: rgba(0, 0, 0, 0.3);
             border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        body.dark-mode footer {
+            color: #e5e7eb !important;
+        }
+        
+        body.dark-mode .bg-blue-100,
+        body.dark-mode .bg-purple-100,
+        body.dark-mode .bg-green-100 {
+            background-color: rgba(59, 130, 246, 0.2) !important;
+        }
+        
+        body.dark-mode .text-blue-600,
+        body.dark-mode .text-purple-600,
+        body.dark-mode .text-green-600 {
+            color: #93c5fd !important;
+        }
+        
+        body.dark-mode .bg-gray-300 {
+            background-color: rgba(55, 65, 81, 0.8) !important;
+        }
+        
+        body.dark-mode .text-gray-500 {
+            color: #9ca3af !important;
+        }
+        
+        body.dark-mode .bg-gray-200 {
+            background-color: rgba(55, 65, 81, 0.6) !important;
+        }
+        
+        body.dark-mode select,
+        body.dark-mode textarea {
+            background: rgba(30, 30, 46, 0.9) !important;
+            color: #e5e7eb !important;
+            border-color: #374151 !important;
         }
         
         /* Toggle de Modo Escuro */
@@ -729,15 +794,15 @@
         
         @media (max-width: 768px) {
             .hamburger-btn {
-                display: flex;
+                display: flex !important;
             }
             
             .navbar-links {
-                display: none;
+                display: none !important;
             }
             
             .desktop-logout {
-                display: none;
+                display: none !important;
             }
         }
         
