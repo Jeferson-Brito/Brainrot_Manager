@@ -491,6 +491,11 @@
             if (modoOrganizacaoAtivo) {
                 inicializarSortable();
             }
+            },
+            error: function(xhr, status, error) {
+                console.error('Erro ao carregar brainrots:', error);
+                $('#loading').hide();
+            }
         });
     }
     
