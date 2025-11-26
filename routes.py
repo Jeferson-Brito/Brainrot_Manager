@@ -128,7 +128,7 @@ def index():
     # Brainrots recentes
     brainrots_recentes = Brainrot.query.order_by(Brainrot.data_criacao.desc()).limit(5).all()
     
-    # Top 10 brainrots que mais pagam
+    # Top 30 brainrots que mais pagam
     # Buscar todos os brainrots e ordenar por valor (usando parse_valor_formatado)
     todos_brainrots = Brainrot.query.all()
     brainrots_com_valor = []
@@ -138,33 +138,15 @@ def index():
         valor_total = valor_num * (br.quantidade or 1)
         brainrots_com_valor.append((br, valor_total, valor_num))
     
-    # Ordenar por valor total (decrescente) e pegar top 10
+    # Ordenar por valor total (decrescente) e pegar top 30
     brainrots_com_valor.sort(key=lambda x: x[1], reverse=True)
-    top_10_brainrots = [br[0] for br in brainrots_com_valor[:10]]
-    
-    # Estatísticas por raridade
-    brainrots_por_raridade = defaultdict(int)
-    for br in todos_brainrots:
-        brainrots_por_raridade[br.raridade] += 1
-    
-    # Estatísticas de eventos
-    eventos_count = defaultdict(int)
-    for br in todos_brainrots:
-        eventos = br.get_eventos()
-        if eventos:
-            for evento in eventos:
-                eventos_count[evento] += 1
-    
-    # Top 5 eventos mais comuns
-    top_eventos = sorted(eventos_count.items(), key=lambda x: x[1], reverse=True)[:5]
+    top_30_brainrots = [br[0] for br in brainrots_com_valor[:30]]
     
     return render_template('index.html',
                          total_contas=total_contas,
                          total_brainrots=total_brainrots,
                          brainrots_recentes=brainrots_recentes,
-                         top_10_brainrots=top_10_brainrots,
-                         brainrots_por_raridade=dict(brainrots_por_raridade),
-                         top_eventos=top_eventos)
+                         top_30_brainrots=top_30_brainrots)
 
 @app.route('/brainrots')
 @login_required
