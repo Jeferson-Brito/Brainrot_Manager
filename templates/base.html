@@ -614,6 +614,157 @@
                 box-shadow: 0 0 30px rgba(102, 126, 234, 0.7);
             }
         }
+        
+        /* Menu Hambúrguer */
+        .hamburger-menu {
+            display: none;
+        }
+        
+        .hamburger-btn {
+            display: none;
+            flex-direction: column;
+            justify-content: space-around;
+            width: 30px;
+            height: 30px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            z-index: 1001;
+        }
+        
+        .hamburger-btn span {
+            width: 30px;
+            height: 3px;
+            background: white;
+            border-radius: 3px;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform-origin: center;
+        }
+        
+        .hamburger-btn.active span:nth-child(1) {
+            transform: rotate(45deg) translate(8px, 8px);
+        }
+        
+        .hamburger-btn.active span:nth-child(2) {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        
+        .hamburger-btn.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(8px, -8px);
+        }
+        
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 280px;
+            height: 100vh;
+            background: rgba(30, 30, 46, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            transition: right 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: -5px 0 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            padding: 80px 20px 20px;
+        }
+        
+        .mobile-menu.active {
+            right: 0;
+        }
+        
+        .mobile-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .mobile-menu a {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+        
+        .mobile-menu a:hover {
+            background: rgba(102, 126, 234, 0.3);
+            transform: translateX(5px);
+        }
+        
+        .mobile-menu a i {
+            width: 24px;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        
+        .mobile-menu .logout-link {
+            margin-top: auto;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .mobile-menu .logout-link:hover {
+            background: rgba(239, 68, 68, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            .hamburger-btn {
+                display: flex;
+            }
+            
+            .navbar-links {
+                display: none;
+            }
+            
+            .desktop-logout {
+                display: none;
+            }
+        }
+        
+        /* Logout melhorado */
+        .logout-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        
+        .logout-btn i {
+            font-size: 16px;
+        }
     </style>
     
     <script>
@@ -651,19 +802,55 @@
                     <h1 class="text-lg md:text-2xl font-bold">Brainrot Manager</h1>
                 </div>
                 <div class="flex items-center space-x-2 md:space-x-6">
-                    <a href="{{ url_for('index') }}" class="hover:text-yellow-200 transition-colors text-sm md:text-base">
-                        <i class="fas fa-home md:mr-2"></i><span class="hidden sm:inline">Home</span>
-                    </a>
-                    <a href="{{ url_for('brainrots_list') }}" class="hover:text-yellow-200 transition-colors text-sm md:text-base">
-                        <i class="fas fa-cube md:mr-2"></i><span class="hidden sm:inline">Brainrots</span>
-                    </a>
-                    <a href="{{ url_for('contas_list') }}" class="hover:text-yellow-200 transition-colors text-sm md:text-base">
-                        <i class="fas fa-users md:mr-2"></i><span class="hidden sm:inline">Contas</span>
-                    </a>
+                    <!-- Links do menu (desktop) -->
+                    <div class="navbar-links flex items-center space-x-2 md:space-x-6">
+                        <a href="{{ url_for('index') }}" class="hover:text-yellow-200 transition-colors text-sm md:text-base">
+                            <i class="fas fa-home md:mr-2"></i><span class="hidden sm:inline">Home</span>
+                        </a>
+                        <a href="{{ url_for('brainrots_list') }}" class="hover:text-yellow-200 transition-colors text-sm md:text-base">
+                            <i class="fas fa-cube md:mr-2"></i><span class="hidden sm:inline">Brainrots</span>
+                        </a>
+                        <a href="{{ url_for('contas_list') }}" class="hover:text-yellow-200 transition-colors text-sm md:text-base">
+                            <i class="fas fa-users md:mr-2"></i><span class="hidden sm:inline">Contas</span>
+                        </a>
+                        <a href="{{ url_for('logout') }}" class="desktop-logout logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Sair</span>
+                        </a>
+                    </div>
+                    <!-- Botão Hambúrguer (mobile) -->
+                    <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileMenu()">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
                 </div>
             </div>
         </div>
     </nav>
+    
+    <!-- Overlay do menu mobile -->
+    <div class="mobile-menu-overlay" id="mobile-menu-overlay" onclick="toggleMobileMenu()"></div>
+    
+    <!-- Menu Mobile -->
+    <div class="mobile-menu" id="mobile-menu">
+        <a href="{{ url_for('index') }}" onclick="toggleMobileMenu()">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="{{ url_for('brainrots_list') }}" onclick="toggleMobileMenu()">
+            <i class="fas fa-cube"></i>
+            <span>Brainrots</span>
+        </a>
+        <a href="{{ url_for('contas_list') }}" onclick="toggleMobileMenu()">
+            <i class="fas fa-users"></i>
+            <span>Contas</span>
+        </a>
+        <a href="{{ url_for('logout') }}" class="logout-link" onclick="toggleMobileMenu()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Sair</span>
+        </a>
+    </div>
     {% endif %}
     
     <!-- Conteúdo Principal -->
@@ -698,20 +885,6 @@
     </button>
     {% endif %}
     
-    <!-- Navbar com Logout (apenas se estiver logado) -->
-    {% if current_user.is_authenticated %}
-    <div class="fixed bottom-4 right-4 z-50">
-        <div class="bg-white/90 backdrop-blur-md rounded-lg shadow-lg p-3 flex items-center space-x-3">
-            <span class="text-sm text-gray-700">
-                <i class="fas fa-user-circle mr-1"></i>{{ current_user.email }}
-            </span>
-            <a href="{{ url_for('logout') }}" 
-               class="text-red-600 hover:text-red-700 text-sm font-medium px-3 py-1 rounded hover:bg-red-50 transition-colors">
-                <i class="fas fa-sign-out-alt mr-1"></i>Sair
-            </a>
-        </div>
-    </div>
-    {% endif %}
     
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -781,9 +954,39 @@
             }
         });
         
+        // Menu Hambúrguer Mobile
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const overlay = document.getElementById('mobile-menu-overlay');
+            const btn = document.getElementById('hamburger-btn');
+            
+            if (menu && overlay && btn) {
+                menu.classList.toggle('active');
+                overlay.classList.toggle('active');
+                btn.classList.toggle('active');
+            }
+        }
+        
+        // Fechar menu ao clicar fora (já está no onclick do overlay)
+        // Fechar menu ao pressionar ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const menu = document.getElementById('mobile-menu');
+                const overlay = document.getElementById('mobile-menu-overlay');
+                const btn = document.getElementById('hamburger-btn');
+                
+                if (menu && menu.classList.contains('active')) {
+                    menu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    btn.classList.remove('active');
+                }
+            }
+        });
+        
         // Expor funções globalmente
         window.showToast = showToast;
         window.toggleTheme = toggleTheme;
+        window.toggleMobileMenu = toggleMobileMenu;
         
         // Registrar Service Worker para PWA
         if ('serviceWorker' in navigator) {
