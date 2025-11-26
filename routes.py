@@ -485,8 +485,6 @@ def api_brainrot_create():
             foto_value = ''
         foto_value = foto_value.strip() if foto_value else ''
         
-        print(f"DEBUG: Criando brainrot com foto: '{foto_value}'")
-        
         brainrot = Brainrot(
             nome=data.get('nome'),
             foto=foto_value,
@@ -554,7 +552,6 @@ def api_brainrot_create():
         
         # Recarregar do banco para garantir que está salvo
         db.session.refresh(brainrot)
-        print(f"DEBUG: Brainrot criado com ID {brainrot.id}, foto salva: '{brainrot.foto}'")
         
         return jsonify({'success': True, 'brainrot': brainrot.to_dict()}), 201
         
@@ -580,8 +577,6 @@ def api_brainrot_update(id):
         if foto_value is None:
             foto_value = ''
         foto_value = foto_value.strip() if foto_value else ''
-        
-        print(f"DEBUG: Atualizando brainrot {id}, foto atual: '{brainrot.foto}', nova foto: '{foto_value}'")
         
         # Se a foto foi atualizada e não está vazia, atualizar em todas as instâncias do mesmo Brainrot
         if foto_value and foto_value != brainrot.foto:
@@ -644,7 +639,6 @@ def api_brainrot_update(id):
         
         # Recarregar do banco para garantir que está salvo
         db.session.refresh(brainrot)
-        print(f"DEBUG: Brainrot {id} atualizado, foto salva: '{brainrot.foto}'")
         
         # Registrar histórico
         historico = HistoricoAlteracao(
