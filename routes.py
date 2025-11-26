@@ -330,13 +330,6 @@ def api_brainrots_list():
         # Buscar brainrots que tenham o evento na lista de eventos (JSON)
         query = query.filter(Brainrot.eventos.contains(f'"{evento}"'))
     
-    # Filtrar por favorito
-    favorito = request.args.get('favorito')
-    if favorito == 'true':
-        query = query.filter(Brainrot.favorito == True)
-    elif favorito == 'false':
-        query = query.filter(Brainrot.favorito == False)
-    
     # Filtrar por tag
     tag = request.args.get('tag', '').strip()
     if tag:
@@ -366,7 +359,7 @@ def api_brainrots_list():
         busca, raridade, valor_min is not None, valor_max is not None, valor_formato,
         quantidade_min is not None, quantidade_max is not None,
         mutacoes_min is not None, mutacoes_max is not None,
-        evento, favorito, tag, conta_id
+        evento, tag, conta_id
     ])
     
     if tem_filtros and brainrots_filtrados:
@@ -726,6 +719,30 @@ def api_brainrot_copiar(id):
         return jsonify({'success': True, 'dados': dados})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/brainrots/buscar-dados-por-nome', methods=['GET'])
+@login_required
+def api_brainrot_buscar_dados_por_nome():
+    """API para buscar dados de um brainrot por nome exato (para preenchimento automático)"""
+    nome = request.args.get('nome', '').strip()
+    
+    if not nome:
+        return jsonify({'success': False, 'error': 'Nome não fornecido'}), 400
+    
+    # Buscar o primeiro brainrot com o nome exato (case-insensitive)
+    brainrot = Brainrot.query.filter(Brainrot.nome.ilike(nome)).first()
+    
+    if brainrot:
+        return jsonify({
+            'success': True,
+            'dados': {
+                'nome': brainrot.nome,
+                'raridade': brainrot.raridade,
+                'foto': brainrot.foto or ''
+            }
+        })
+    
+    return jsonify({'success': False, 'dados': None})
 
 @app.route('/api/brainrots/<int:id>', methods=['DELETE'])
 @login_required

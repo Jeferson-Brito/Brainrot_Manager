@@ -509,10 +509,10 @@
             });
         }
         
-        // Sugestão de raridade e copiar dados ao digitar nome (apenas para novos brainrots)
+        // Preenchimento automático ao digitar nome (apenas para novos brainrots)
         {% if not brainrot %}
         let buscaTimeout;
-        let brainrotEncontrado = null;
+        let nomeOriginal = ''; // Guardar o nome original antes do preenchimento automático
         
         $('#nome').on('input', function() {
             const nome = $(this).val().trim();
@@ -523,57 +523,39 @@
             // Esconder sugestões
             $('#sugestao-raridade').addClass('hidden');
             $('#sugestao-copiar').addClass('hidden');
-            brainrotEncontrado = null;
             
             if (nome.length > 2) {
                 // Aguardar um pouco antes de buscar (debounce)
                 buscaTimeout = setTimeout(function() {
-                    // Buscar brainrots com nome similar
-                    $.get('/api/brainrots', { busca: nome }, function(brainrots) {
-                        // Procurar por match exato ou muito similar
-                        const brainrotMatch = brainrots.find(function(br) {
-                            return br.nome.toLowerCase() === nome.toLowerCase() || 
-                                   br.nome.toLowerCase().startsWith(nome.toLowerCase());
-                        });
-                        
-                        if (brainrotMatch) {
-                            brainrotEncontrado = brainrotMatch;
-                            $('#nome-brainrot-encontrado').text(brainrotMatch.nome);
-                            $('#sugestao-copiar').removeClass('hidden');
+                    // Buscar dados de brainrot com nome exato
+                    $.get('/api/brainrots/buscar-dados-por-nome', { nome: nome }, function(response) {
+                        if (response.success && response.dados) {
+                            const dados = response.dados;
                             
-                            // Também buscar raridade sugerida
-                            $.get('/api/brainrots/buscar-por-nome', { nome: nome }, function(response) {
-                                if (response.success && response.raridade_sugerida) {
-                                    $('#raridade-sugerida').text(response.raridade_sugerida);
-                                    $('#sugestao-raridade').removeClass('hidden');
+                            // Preencher automaticamente nome completo, raridade e foto
+                            if (dados.nome && dados.nome.toLowerCase() === nome.toLowerCase()) {
+                                // Só preencher se o nome for exatamente igual (case-insensitive)
+                                // Mas manter o que o usuário digitou se for diferente
+                                if ($('#nome').val().trim().toLowerCase() === nome.toLowerCase()) {
+                                    $('#nome').val(dados.nome);
+                                    nomeOriginal = dados.nome;
                                 }
-                            });
-                        } else {
-                            // Apenas buscar raridade sugerida
-                            $.get('/api/brainrots/buscar-por-nome', { nome: nome }, function(response) {
-                                if (response.success && response.raridade_sugerida) {
-                                    $('#raridade-sugerida').text(response.raridade_sugerida);
-                                    $('#sugestao-raridade').removeClass('hidden');
+                                
+                                // Preencher raridade se ainda não foi preenchida
+                                if (!$('#raridade').val() || $('#raridade').val() === '') {
+                                    $('#raridade').val(dados.raridade);
                                 }
-                            });
+                                
+                                // Preencher foto se ainda não foi preenchida e se existir
+                                if (dados.foto && dados.foto.trim() && !$('#foto-url').val().trim()) {
+                                    $('#foto-url').val(dados.foto);
+                                    atualizarPreviewImagem(dados.foto);
+                                }
+                            }
                         }
                     });
                 }, 500); // Aguardar 500ms após parar de digitar
             }
-        });
-        
-        // Copiar dados do brainrot encontrado
-        $('#btn-copiar-sugestao').on('click', function() {
-            if (brainrotEncontrado) {
-                copiarDadosBrainrot(brainrotEncontrado.id);
-            }
-        });
-        
-        // Aplicar sugestão de raridade
-        $('#aplicar-sugestao').on('click', function() {
-            const raridade = $('#raridade-sugerida').text();
-            $('#raridade').val(raridade);
-            $('#sugestao-raridade').addClass('hidden');
         });
         {% endif %}
     });
