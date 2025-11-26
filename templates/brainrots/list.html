@@ -6,10 +6,18 @@
 <style>
     .filter-card {
         transition: all 0.3s ease;
+        position: sticky;
+        top: 80px; /* Altura aproximada do navbar */
+        z-index: 999;
     }
     
     .filter-card:hover {
         transform: translateY(-2px);
+    }
+    
+    /* Ajustar espaçamento do conteúdo para não ficar escondido */
+    #brainrots-container {
+        margin-top: 1rem;
     }
     
     .brainrot-card {
