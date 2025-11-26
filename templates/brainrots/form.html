@@ -606,7 +606,11 @@
         // Buscar brainrots via API
         $.get('/api/brainrots', function(brainrots) {
             if (brainrots.length === 0) {
-                alert('Não há brainrots cadastrados para copiar.');
+                if (window.showToast) {
+                    showToast('Não há brainrots cadastrados para copiar.', 'info');
+                } else {
+                    alert('Não há brainrots cadastrados para copiar.');
+                }
                 return;
             }
             
