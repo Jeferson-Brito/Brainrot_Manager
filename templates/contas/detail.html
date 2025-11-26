@@ -190,10 +190,19 @@
                 url: `/api/brainrots/${id}`,
                 type: 'DELETE',
                 success: function() {
-                    location.reload();
+                    if (window.showToast) {
+                        showToast('Instância excluída com sucesso!', 'success');
+                    }
+                    setTimeout(() => {
+                        location.reload();
+                    }, 500);
                 },
                 error: function() {
-                    alert('Erro ao excluir instância');
+                    if (window.showToast) {
+                        showToast('Erro ao excluir instância', 'error');
+                    } else {
+                        alert('Erro ao excluir instância');
+                    }
                 }
             });
         }

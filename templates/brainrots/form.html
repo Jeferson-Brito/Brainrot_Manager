@@ -628,6 +628,9 @@
                 
                 if (confirm(`Copiar dados de "${brainrotEscolhido.nome}"?`)) {
                     copiarDadosBrainrot(brainrotEscolhido.id);
+                    if (window.showToast) {
+                        showToast(`Dados copiados de "${brainrotEscolhido.nome}"`, 'success');
+                    }
                 }
             }
         });
@@ -641,10 +644,19 @@
                 url: `/api/brainrots/${id}`,
                 type: 'DELETE',
                 success: function() {
-                    location.reload();
+                    if (window.showToast) {
+                        showToast('Instância excluída com sucesso!', 'success');
+                    }
+                    setTimeout(() => {
+                        location.reload();
+                    }, 500);
                 },
                 error: function() {
-                    alert('Erro ao excluir instância');
+                    if (window.showToast) {
+                        showToast('Erro ao excluir instância', 'error');
+                    } else {
+                        alert('Erro ao excluir instância');
+                    }
                 }
             });
         }
@@ -739,46 +751,60 @@
             data: JSON.stringify(dados),
             success: function(response) {
                 if (response.success) {
-                    // Verificar se veio de uma conta para redirecionar de volta
-                    const urlParams = new URLSearchParams(window.location.search);
-                    let contaId = urlParams.get('conta_id');
-                    
-                    // Se não encontrou na URL, verificar se foi passado via template
-                    if (!contaId) {
-                        {% if conta_pre_selecionada %}
-                        contaId = {{ conta_pre_selecionada }};
-                        {% endif %}
+                    // Mostrar toast de sucesso
+                    if (window.showToast) {
+                        const mensagem = brainrotId ? 'Brainrot atualizado com sucesso!' : 'Brainrot criado com sucesso!';
+                        showToast(mensagem, 'success');
                     }
                     
-                    // Se estiver editando um brainrot existente, verificar se ele tem contas associadas
-                    if (!contaId && brainrotId && response.brainrot && response.brainrot.contas && response.brainrot.contas.length > 0) {
-                        // Se o brainrot tem contas associadas, redirecionar para a primeira conta
-                        // Mas só se não veio de uma página específica
-                        // Por enquanto, vamos para a lista de brainrots mesmo
-                    }
-                    
-                    if (contaId) {
-                        // Redirecionar para a página da conta com cache-busting
-                        window.location.href = '/contas/' + contaId + '?t=' + Date.now();
-                    } else {
-                        // Redirecionar para a lista de brainrots com cache-busting
-                        window.location.href = '/brainrots?t=' + Date.now();
-                    }
+                    // Aguardar um pouco para mostrar o toast antes de redirecionar
+                    setTimeout(() => {
+                        // Verificar se veio de uma conta para redirecionar de volta
+                        const urlParams = new URLSearchParams(window.location.search);
+                        let contaId = urlParams.get('conta_id');
+                        
+                        // Se não encontrou na URL, verificar se foi passado via template
+                        if (!contaId) {
+                            {% if conta_pre_selecionada %}
+                            contaId = {{ conta_pre_selecionada }};
+                            {% endif %}
+                        }
+                        
+                        // Se estiver editando um brainrot existente, verificar se ele tem contas associadas
+                        if (!contaId && brainrotId && response.brainrot && response.brainrot.contas && response.brainrot.contas.length > 0) {
+                            // Se o brainrot tem contas associadas, redirecionar para a primeira conta
+                            // Mas só se não veio de uma página específica
+                            // Por enquanto, vamos para a lista de brainrots mesmo
+                        }
+                        
+                        if (contaId) {
+                            // Redirecionar para a página da conta com cache-busting
+                            window.location.href = '/contas/' + contaId + '?t=' + Date.now();
+                        } else {
+                            // Redirecionar para a lista de brainrots com cache-busting
+                            window.location.href = '/brainrots?t=' + Date.now();
+                        }
+                    }, 500);
                 }
             },
             error: function(xhr) {
                 console.error('Erro ao salvar Brainrot:', xhr);
                 let errorMsg = 'Erro ao salvar Brainrot.';
                 if (xhr.responseJSON && xhr.responseJSON.error) {
-                    errorMsg += '\n\nErro: ' + xhr.responseJSON.error;
+                    errorMsg = xhr.responseJSON.error;
                 } else if (xhr.status === 0) {
-                    errorMsg += '\n\nErro: Não foi possível conectar ao servidor. Verifique se o servidor está rodando.';
+                    errorMsg = 'Não foi possível conectar ao servidor. Verifique se o servidor está rodando.';
                 } else if (xhr.status === 500) {
-                    errorMsg += '\n\nErro: Erro interno do servidor. Verifique o terminal do servidor para mais detalhes.';
+                    errorMsg = 'Erro interno do servidor. Verifique o terminal do servidor para mais detalhes.';
                 } else {
-                    errorMsg += '\n\nStatus: ' + xhr.status + '\nResposta: ' + xhr.responseText;
+                    errorMsg = 'Erro ao salvar. Status: ' + xhr.status;
                 }
-                alert(errorMsg);
+                
+                if (window.showToast) {
+                    showToast(errorMsg, 'error', 5000);
+                } else {
+                    alert(errorMsg);
+                }
             }
         });
     });

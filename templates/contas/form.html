@@ -121,22 +121,33 @@
             data: JSON.stringify(dados),
             success: function(response) {
                 if (response.success) {
-                    window.location.href = '/contas';
+                    if (window.showToast) {
+                        const mensagem = contaId ? 'Conta atualizada com sucesso!' : 'Conta criada com sucesso!';
+                        showToast(mensagem, 'success');
+                    }
+                    setTimeout(() => {
+                        window.location.href = '/contas';
+                    }, 500);
                 }
             },
             error: function(xhr) {
                 console.error('Erro ao salvar Conta:', xhr);
                 let errorMsg = 'Erro ao salvar Conta.';
                 if (xhr.responseJSON && xhr.responseJSON.error) {
-                    errorMsg += '\n\nErro: ' + xhr.responseJSON.error;
+                    errorMsg = xhr.responseJSON.error;
                 } else if (xhr.status === 0) {
-                    errorMsg += '\n\nErro: Não foi possível conectar ao servidor. Verifique se o servidor está rodando.';
+                    errorMsg = 'Não foi possível conectar ao servidor. Verifique se o servidor está rodando.';
                 } else if (xhr.status === 500) {
-                    errorMsg += '\n\nErro: Erro interno do servidor. Verifique o terminal do servidor para mais detalhes.';
+                    errorMsg = 'Erro interno do servidor. Verifique o terminal do servidor para mais detalhes.';
                 } else {
-                    errorMsg += '\n\nStatus: ' + xhr.status + '\nResposta: ' + xhr.responseText;
+                    errorMsg = 'Erro ao salvar. Status: ' + xhr.status;
                 }
-                alert(errorMsg);
+                
+                if (window.showToast) {
+                    showToast(errorMsg, 'error', 5000);
+                } else {
+                    alert(errorMsg);
+                }
             }
         });
     });

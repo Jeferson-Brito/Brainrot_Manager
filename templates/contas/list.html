@@ -184,10 +184,17 @@
                 url: '/api/contas/' + id,
                 type: 'DELETE',
                 success: function() {
+                    if (window.showToast) {
+                        showToast('Conta excluída com sucesso!', 'success');
+                    }
                     carregarContas();
                 },
                 error: function() {
-                    alert('Erro ao excluir Conta');
+                    if (window.showToast) {
+                        showToast('Erro ao excluir Conta', 'error');
+                    } else {
+                        alert('Erro ao excluir Conta');
+                    }
                 }
             });
         }
