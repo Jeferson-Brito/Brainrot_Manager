@@ -19,80 +19,35 @@
         background-color: #eef2ff;
     }
     
-    /* Estilos para os cards de eventos */
-    .evento-checkbox input:checked + .evento-card {
-        border-color: #9333ea;
-        background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
-        box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
-        transform: scale(1.05);
+    /* Estilos para dropdown de eventos */
+    #eventos-dropdown label:hover {
+        background-color: #f3f4f6;
     }
     
-    .evento-checkbox input:checked ~ .evento-checked {
-        display: block !important;
+    #eventos-dropdown label:has(input:checked) {
+        background-color: #f3e8ff;
     }
     
-    .evento-checkbox input:checked + .evento-card .evento-icon {
-        opacity: 1;
-        transform: scale(1.2);
-    }
-    
-    .evento-checkbox input:checked + .evento-card .evento-icon i {
-        color: #9333ea;
-    }
-    
-    .evento-checkbox input:checked + .evento-card .evento-text {
+    #eventos-dropdown label:has(input:checked) span {
         color: #7c3aed;
-        font-weight: 600;
+        font-weight: 500;
     }
     
-    .evento-card {
-        min-height: 80px;
-    }
-    
-    .evento-text {
-        word-break: break-word;
-        hyphens: auto;
-    }
-    
-    /* Animação de entrada para os cards */
-    .evento-checkbox {
-        animation: fadeInUp 0.3s ease forwards;
-        opacity: 0;
-    }
-    
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    /* Dark mode para eventos */
-    body.dark-mode .evento-card {
-        background: rgba(30, 30, 46, 0.8);
+    body.dark-mode #eventos-dropdown {
+        background: rgba(30, 30, 46, 0.95);
         border-color: rgba(255, 255, 255, 0.1);
     }
     
-    body.dark-mode .evento-card:hover {
-        background: rgba(147, 51, 234, 0.2);
-        border-color: rgba(147, 51, 234, 0.5);
-    }
-    
-    body.dark-mode .evento-checkbox input:checked + .evento-card {
-        background: linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(147, 51, 234, 0.2) 100%);
-        border-color: #9333ea;
-    }
-    
-    body.dark-mode .evento-text {
+    body.dark-mode #eventos-dropdown label {
         color: #e5e7eb;
     }
     
-    body.dark-mode .evento-checkbox input:checked + .evento-card .evento-text {
-        color: #c4b5fd;
+    body.dark-mode #eventos-dropdown label:hover {
+        background-color: rgba(55, 65, 81, 0.5);
+    }
+    
+    body.dark-mode #eventos-dropdown label:has(input:checked) {
+        background-color: rgba(147, 51, 234, 0.2);
     }
 </style>
 {% endblock %}
@@ -216,34 +171,30 @@
                     
                     <!-- Eventos (Mutações) -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-3">
-                            <i class="fas fa-star mr-2 text-yellow-500"></i>Eventos
-                        </label>
-                        <div class="border border-gray-200 rounded-xl p-4 max-h-96 overflow-y-auto bg-gradient-to-br from-gray-50 to-white shadow-inner">
-                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Eventos</label>
+                        <div class="relative">
+                            <button type="button" id="eventos-dropdown-btn" 
+                                    class="input-modern w-full px-4 py-3 rounded-lg focus:outline-none text-left flex items-center justify-between">
+                                <span id="eventos-selecionados-text" class="text-gray-700">
+                                    {% if brainrot and brainrot.get_eventos() %}
+                                        {{ brainrot.get_eventos()|length }} evento(s) selecionado(s)
+                                    {% else %}
+                                        Nenhum evento selecionado
+                                    {% endif %}
+                                </span>
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </button>
+                            <div id="eventos-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
                                 {% for evento in eventos %}
-                                <label class="evento-checkbox relative group cursor-pointer">
+                                <label class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
                                     <input type="checkbox" name="eventos_checkbox" value="{{ evento }}"
                                            {% if brainrot and evento in brainrot.get_eventos() %}checked{% endif %}
-                                           class="sr-only evento-input">
-                                    <div class="evento-card flex flex-col items-center justify-center p-3 rounded-lg border-2 border-gray-200 bg-white transition-all duration-300 hover:border-purple-400 hover:bg-purple-50 hover:shadow-md hover:scale-105 group-hover:transform">
-                                        <div class="evento-icon mb-2 text-2xl opacity-60 group-hover:opacity-100 transition-opacity">
-                                            <i class="fas fa-star text-yellow-400"></i>
-                                        </div>
-                                        <span class="evento-text text-xs font-medium text-gray-700 text-center leading-tight group-hover:text-purple-700 transition-colors">{{ evento }}</span>
-                                    </div>
-                                    <div class="evento-checked absolute top-1 right-1 hidden">
-                                        <div class="bg-purple-600 rounded-full p-1 shadow-lg">
-                                            <i class="fas fa-check text-white text-xs"></i>
-                                        </div>
-                                    </div>
+                                           class="mr-3 rounded border-gray-300 text-purple-600 focus:ring-purple-500 evento-checkbox-input">
+                                    <span class="text-sm text-gray-700 flex-1">{{ evento }}</span>
                                 </label>
                                 {% endfor %}
                             </div>
                         </div>
-                        <p class="text-xs text-gray-500 mt-2">
-                            <i class="fas fa-info-circle mr-1"></i>Selecione os eventos que este Brainrot possui
-                        </p>
                         <!-- Campo oculto para manter compatibilidade -->
                         <input type="hidden" id="numero_mutacoes" name="numero_mutacoes" value="0">
                     </div>
@@ -466,22 +417,40 @@
     
     // Carregar campos personalizados existentes e valor formatado
     $(document).ready(function() {
-        // Animar cards de eventos com delay escalonado
-        $('.evento-checkbox').each(function(index) {
-            $(this).css({
-                'animation-delay': (index * 0.03) + 's',
-                'animation-fill-mode': 'both'
-            });
+        // Dropdown de eventos
+        $('#eventos-dropdown-btn').on('click', function(e) {
+            e.stopPropagation();
+            $('#eventos-dropdown').toggleClass('hidden');
+            $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
         });
         
-        // Adicionar efeito de ripple ao clicar nos cards
-        $('.evento-checkbox').on('click', function() {
-            const card = $(this).find('.evento-card');
-            card.addClass('animate-pulse');
-            setTimeout(() => {
-                card.removeClass('animate-pulse');
-            }, 300);
+        // Fechar dropdown ao clicar fora
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#eventos-dropdown, #eventos-dropdown-btn').length) {
+                $('#eventos-dropdown').addClass('hidden');
+                $('#eventos-dropdown-btn i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+            }
         });
+        
+        // Atualizar texto quando eventos são selecionados/deselecionados
+        function atualizarTextoEventos() {
+            const selecionados = $('input[name="eventos_checkbox"]:checked').length;
+            if (selecionados === 0) {
+                $('#eventos-selecionados-text').text('Nenhum evento selecionado');
+            } else if (selecionados === 1) {
+                $('#eventos-selecionados-text').text('1 evento selecionado');
+            } else {
+                $('#eventos-selecionados-text').text(selecionados + ' eventos selecionados');
+            }
+        }
+        
+        // Listener para checkboxes de eventos
+        $(document).on('change', 'input[name="eventos_checkbox"]', function() {
+            atualizarTextoEventos();
+        });
+        
+        // Atualizar texto inicial
+        atualizarTextoEventos();
         // Listener para atualizar preview de imagem ao digitar URL
         $('#foto-url').on('input', function() {
             const url = $(this).val().trim();
