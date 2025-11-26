@@ -14,12 +14,12 @@ RARIDADES = ['Comum', 'Raro', 'Épico', 'Lendário', 'Mítico', 'Deus Brainrot',
 
 # Lista de eventos disponíveis
 EVENTOS = [
-    '10B', '1x1x1x1', '4 de Julho', 'Sangue Podre', 'Bombardeiro', 'Brasil', 'Doce', 'Celestial',
-    'Concerto', 'Crab Rave', 'Diamante', 'Extinto', 'Fogo', 'Galáxia', 'Falha', 'Ouro',
-    'Indonésia', 'Lava', 'Relâmpago', 'Matteo', 'Meowl', 'México', 'Gatos Nyan', 'Pintura',
-    'Abóbora', 'Radioativo', 'Chuva', 'Arco-íris', 'Chovendo Tacos', 'RIP', 'Tubarão',
-    'Sonolento', 'Neve', 'Aranha', 'Queda de Estrelas', 'Morango', 'Gravata', 'Ataque Tung Tung',
-    'OVNI', 'Bruxa', 'Yin-Yang'
+    '10B', '1x1x1x1', '4th of July', 'Bloodrot', 'Bombardiro', 'Brazil', 'Candy', 'Celestial',
+    'Concert', 'Crab Rave', 'Diamond', 'Extinct', 'Fire', 'Galaxy', 'Glitch', 'Gold',
+    'Indonesia', 'Lava', 'Lightning', 'Matteo', 'Meowl', 'Mexico', 'Nyan Cats', 'Paint',
+    'Pumpkin', 'Radioactive', 'Rain', 'Rainbow', 'Raining Tacos', 'RIP', 'Shark',
+    'Sleepy', 'Snow', 'Spider', 'Starfall', 'Strawberry', 'Tie', 'Tung Tung Attack',
+    'UFO', 'Witch', 'Yin-Yang'
 ]
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
