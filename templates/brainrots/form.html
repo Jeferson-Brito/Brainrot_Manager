@@ -513,6 +513,8 @@
         {% if not brainrot %}
         let buscaTimeout;
         let nomeOriginal = ''; // Guardar o nome original antes do preenchimento automático
+        let raridadePreenchida = false; // Flag para evitar preencher raridade múltiplas vezes
+        let fotoPreenchida = false; // Flag para evitar preencher foto múltiplas vezes
         
         $('#nome').on('input', function() {
             const nome = $(this).val().trim();
@@ -524,6 +526,12 @@
             $('#sugestao-raridade').addClass('hidden');
             $('#sugestao-copiar').addClass('hidden');
             
+            // Resetar flags se o nome mudou significativamente
+            if (nome.length < 2) {
+                raridadePreenchida = false;
+                fotoPreenchida = false;
+            }
+            
             if (nome.length > 2) {
                 // Aguardar um pouco antes de buscar (debounce)
                 buscaTimeout = setTimeout(function() {
@@ -532,24 +540,29 @@
                         if (response.success && response.dados) {
                             const dados = response.dados;
                             
-                            // Preencher automaticamente nome completo, raridade e foto
-                            if (dados.nome && dados.nome.toLowerCase() === nome.toLowerCase()) {
-                                // Só preencher se o nome for exatamente igual (case-insensitive)
-                                // Mas manter o que o usuário digitou se for diferente
-                                if ($('#nome').val().trim().toLowerCase() === nome.toLowerCase()) {
+                            // Verificar se o nome digitado corresponde ao nome encontrado (case-insensitive)
+                            const nomeDigitado = $('#nome').val().trim().toLowerCase();
+                            const nomeEncontrado = dados.nome.toLowerCase();
+                            
+                            // Se o nome encontrado começa com o nome digitado ou é igual
+                            if (nomeEncontrado === nomeDigitado || nomeEncontrado.startsWith(nomeDigitado)) {
+                                // Preencher nome completo se ainda não foi preenchido completamente
+                                if (nomeEncontrado !== nomeDigitado) {
                                     $('#nome').val(dados.nome);
                                     nomeOriginal = dados.nome;
                                 }
                                 
-                                // Preencher raridade se ainda não foi preenchida
-                                if (!$('#raridade').val() || $('#raridade').val() === '') {
+                                // Preencher raridade automaticamente (sempre que encontrar match)
+                                if (dados.raridade && !raridadePreenchida) {
                                     $('#raridade').val(dados.raridade);
+                                    raridadePreenchida = true;
                                 }
                                 
                                 // Preencher foto se ainda não foi preenchida e se existir
-                                if (dados.foto && dados.foto.trim() && !$('#foto-url').val().trim()) {
+                                if (dados.foto && dados.foto.trim() && !fotoPreenchida && !$('#foto-url').val().trim()) {
                                     $('#foto-url').val(dados.foto);
                                     atualizarPreviewImagem(dados.foto);
+                                    fotoPreenchida = true;
                                 }
                             }
                         }
