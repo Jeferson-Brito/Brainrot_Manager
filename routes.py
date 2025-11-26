@@ -142,11 +142,15 @@ def index():
     brainrots_com_valor.sort(key=lambda x: x[1], reverse=True)
     top_30_brainrots = [br[0] for br in brainrots_com_valor[:30]]
     
+    # Metas
+    metas = Meta.query.all() if Meta else []
+    
     return render_template('index.html',
                          total_contas=total_contas,
                          total_brainrots=total_brainrots,
                          brainrots_recentes=brainrots_recentes,
-                         top_30_brainrots=top_30_brainrots)
+                         top_30_brainrots=top_30_brainrots,
+                         metas=metas)
 
 @app.route('/brainrots')
 @login_required
