@@ -333,42 +333,62 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        /* Bordas dos cards por raridade */
+        /* Bordas laterais dos cards por raridade */
         .card-raridade-comum {
-            border: 3px solid #22c55e;
+            border-left: 4px solid #22c55e;
+            border-right: 4px solid #22c55e;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
         }
         
         .card-raridade-raro {
-            border: 3px solid #3b82f6;
+            border-left: 4px solid #3b82f6;
+            border-right: 4px solid #3b82f6;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
         }
         
         .card-raridade-epico,
         .card-raridade-épico {
-            border: 3px solid #a855f7;
+            border-left: 4px solid #a855f7;
+            border-right: 4px solid #a855f7;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
         }
         
         .card-raridade-lendario,
         .card-raridade-lendário {
-            border: 3px solid #fbbf24;
+            border-left: 4px solid #fbbf24;
+            border-right: 4px solid #fbbf24;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
         }
         
         .card-raridade-mitico,
         .card-raridade-mítico {
-            border: 3px solid #ef4444;
+            border-left: 4px solid #ef4444;
+            border-right: 4px solid #ef4444;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
         }
         
-        /* Deus Brainrot - Borda com arco-íris animado */
+        /* Deus Brainrot - Borda lateral com arco-íris animado */
         .card-raridade-deus-brainrot {
-            border: 3px solid transparent;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
             position: relative;
-            background-clip: padding-box;
         }
         
         .card-raridade-deus-brainrot::before {
             content: '';
             position: absolute;
-            inset: -3px;
-            background: linear-gradient(90deg, 
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, 
                 #ff0000 0%, 
                 #ff7f00 14%, 
                 #ffff00 28%, 
@@ -377,72 +397,167 @@
                 #4b0082 70%, 
                 #9400d3 84%, 
                 #ff0000 100%);
-            background-size: 200% 100%;
-            animation: rainbow-border-wave-left 2s linear infinite;
-            border-radius: inherit;
-            z-index: -1;
+            background-size: 100% 200%;
+            animation: rainbow-border-vertical 2s linear infinite;
+            border-radius: 0.75rem 0 0 0.75rem;
+            z-index: 1;
             pointer-events: none;
         }
         
-        @keyframes rainbow-border-wave-left {
-            0% { background-position: 100% 0%; }
-            100% { background-position: -100% 0%; }
+        .card-raridade-deus-brainrot::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, 
+                #ff0000 0%, 
+                #ff7f00 14%, 
+                #ffff00 28%, 
+                #00ff00 42%, 
+                #0000ff 56%, 
+                #4b0082 70%, 
+                #9400d3 84%, 
+                #ff0000 100%);
+            background-size: 100% 200%;
+            animation: rainbow-border-vertical 2s linear infinite;
+            border-radius: 0 0.75rem 0.75rem 0;
+            z-index: 1;
+            pointer-events: none;
         }
         
-        /* Secreto - Borda preta com listra branca animada */
+        @keyframes rainbow-border-vertical {
+            0% { background-position: 0% 100%; }
+            100% { background-position: 0% -100%; }
+        }
+        
+        /* Secreto - Borda lateral preta com listra branca animada */
         .card-raridade-secreto {
-            border: 3px solid #000000;
+            border-left: 4px solid #000000;
+            border-right: 4px solid #000000;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
             position: relative;
         }
         
         .card-raridade-secreto::before {
             content: '';
             position: absolute;
-            inset: -3px;
-            background: linear-gradient(90deg, 
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, 
                 transparent 0%, 
                 transparent 45%, 
                 #ffffff 50%, 
                 #ffffff 55%, 
                 transparent 100%);
-            background-size: 200% 100%;
-            animation: white-stripe-border 2s ease-in-out infinite;
-            border-radius: inherit;
+            background-size: 100% 200%;
+            animation: white-stripe-vertical 2s ease-in-out infinite;
+            border-radius: 0.75rem 0 0 0.75rem;
             pointer-events: none;
-            z-index: -1;
+            z-index: 1;
         }
         
-        @keyframes white-stripe-border {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+        .card-raridade-secreto::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, 
+                transparent 0%, 
+                transparent 45%, 
+                #ffffff 50%, 
+                #ffffff 55%, 
+                transparent 100%);
+            background-size: 100% 200%;
+            animation: white-stripe-vertical 2s ease-in-out infinite;
+            border-radius: 0 0.75rem 0.75rem 0;
+            pointer-events: none;
+            z-index: 1;
         }
         
-        /* OG - Borda amarela com listra preta animada */
+        @keyframes white-stripe-vertical {
+            0% { background-position: 0% -200%; }
+            100% { background-position: 0% 200%; }
+        }
+        
+        /* OG - Borda lateral amarela com listra preta animada */
         .card-raridade-og {
-            border: 3px solid #fbbf24;
+            border-left: 4px solid #fbbf24;
+            border-right: 4px solid #fbbf24;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
             position: relative;
         }
         
         .card-raridade-og::before {
             content: '';
             position: absolute;
-            inset: -3px;
-            background: linear-gradient(90deg, 
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, 
                 transparent 0%, 
                 transparent 45%, 
                 #000000 50%, 
                 #000000 55%, 
                 transparent 100%);
-            background-size: 200% 100%;
-            animation: black-stripe-border 2s ease-in-out infinite;
-            border-radius: inherit;
+            background-size: 100% 200%;
+            animation: black-stripe-vertical 2s ease-in-out infinite;
+            border-radius: 0.75rem 0 0 0.75rem;
             pointer-events: none;
-            z-index: -1;
+            z-index: 1;
         }
         
-        @keyframes black-stripe-border {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+        .card-raridade-og::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, 
+                transparent 0%, 
+                transparent 45%, 
+                #000000 50%, 
+                #000000 55%, 
+                transparent 100%);
+            background-size: 100% 200%;
+            animation: black-stripe-vertical 2s ease-in-out infinite;
+            border-radius: 0 0.75rem 0.75rem 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        @keyframes black-stripe-vertical {
+            0% { background-position: 0% -200%; }
+            100% { background-position: 0% 200%; }
+        }
+        
+        /* Dark mode para bordas laterais */
+        body.dark-mode .card-raridade-comum,
+        body.dark-mode .card-raridade-raro,
+        body.dark-mode .card-raridade-epico,
+        body.dark-mode .card-raridade-épico,
+        body.dark-mode .card-raridade-lendario,
+        body.dark-mode .card-raridade-lendário,
+        body.dark-mode .card-raridade-mitico,
+        body.dark-mode .card-raridade-mítico {
+            border-top-color: rgba(255, 255, 255, 0.1);
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        body.dark-mode .card-raridade-secreto,
+        body.dark-mode .card-raridade-og,
+        body.dark-mode .card-raridade-deus-brainrot {
+            border-top-color: rgba(255, 255, 255, 0.1);
+            border-bottom-color: rgba(255, 255, 255, 0.1);
         }
         
         /* Sistema de Notificações Toast */
