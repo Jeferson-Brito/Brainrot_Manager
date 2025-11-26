@@ -18,6 +18,82 @@
         border-color: #667eea;
         background-color: #eef2ff;
     }
+    
+    /* Estilos para os cards de eventos */
+    .evento-checkbox input:checked + .evento-card {
+        border-color: #9333ea;
+        background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+        box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+        transform: scale(1.05);
+    }
+    
+    .evento-checkbox input:checked ~ .evento-checked {
+        display: block !important;
+    }
+    
+    .evento-checkbox input:checked + .evento-card .evento-icon {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+    
+    .evento-checkbox input:checked + .evento-card .evento-icon i {
+        color: #9333ea;
+    }
+    
+    .evento-checkbox input:checked + .evento-card .evento-text {
+        color: #7c3aed;
+        font-weight: 600;
+    }
+    
+    .evento-card {
+        min-height: 80px;
+    }
+    
+    .evento-text {
+        word-break: break-word;
+        hyphens: auto;
+    }
+    
+    /* Animação de entrada para os cards */
+    .evento-checkbox {
+        animation: fadeInUp 0.3s ease forwards;
+        opacity: 0;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Dark mode para eventos */
+    body.dark-mode .evento-card {
+        background: rgba(30, 30, 46, 0.8);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    body.dark-mode .evento-card:hover {
+        background: rgba(147, 51, 234, 0.2);
+        border-color: rgba(147, 51, 234, 0.5);
+    }
+    
+    body.dark-mode .evento-checkbox input:checked + .evento-card {
+        background: linear-gradient(135deg, rgba(147, 51, 234, 0.3) 0%, rgba(147, 51, 234, 0.2) 100%);
+        border-color: #9333ea;
+    }
+    
+    body.dark-mode .evento-text {
+        color: #e5e7eb;
+    }
+    
+    body.dark-mode .evento-checkbox input:checked + .evento-card .evento-text {
+        color: #c4b5fd;
+    }
 </style>
 {% endblock %}
 
@@ -140,19 +216,34 @@
                     
                     <!-- Eventos (Mutações) -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Eventos</label>
-                        <div class="border border-gray-200 rounded-lg p-3 md:p-4 max-h-64 overflow-y-auto bg-white">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">
+                            <i class="fas fa-star mr-2 text-yellow-500"></i>Eventos
+                        </label>
+                        <div class="border border-gray-200 rounded-xl p-4 max-h-96 overflow-y-auto bg-gradient-to-br from-gray-50 to-white shadow-inner">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                                 {% for evento in eventos %}
-                                <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                                <label class="evento-checkbox relative group cursor-pointer">
                                     <input type="checkbox" name="eventos_checkbox" value="{{ evento }}"
                                            {% if brainrot and evento in brainrot.get_eventos() %}checked{% endif %}
-                                           class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
-                                    <span class="text-sm text-gray-700">{{ evento }}</span>
+                                           class="sr-only evento-input">
+                                    <div class="evento-card flex flex-col items-center justify-center p-3 rounded-lg border-2 border-gray-200 bg-white transition-all duration-300 hover:border-purple-400 hover:bg-purple-50 hover:shadow-md hover:scale-105 group-hover:transform">
+                                        <div class="evento-icon mb-2 text-2xl opacity-60 group-hover:opacity-100 transition-opacity">
+                                            <i class="fas fa-star text-yellow-400"></i>
+                                        </div>
+                                        <span class="evento-text text-xs font-medium text-gray-700 text-center leading-tight group-hover:text-purple-700 transition-colors">{{ evento }}</span>
+                                    </div>
+                                    <div class="evento-checked absolute top-1 right-1 hidden">
+                                        <div class="bg-purple-600 rounded-full p-1 shadow-lg">
+                                            <i class="fas fa-check text-white text-xs"></i>
+                                        </div>
+                                    </div>
                                 </label>
                                 {% endfor %}
                             </div>
                         </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>Selecione os eventos que este Brainrot possui
+                        </p>
                         <!-- Campo oculto para manter compatibilidade -->
                         <input type="hidden" id="numero_mutacoes" name="numero_mutacoes" value="0">
                     </div>
@@ -375,6 +466,22 @@
     
     // Carregar campos personalizados existentes e valor formatado
     $(document).ready(function() {
+        // Animar cards de eventos com delay escalonado
+        $('.evento-checkbox').each(function(index) {
+            $(this).css({
+                'animation-delay': (index * 0.03) + 's',
+                'animation-fill-mode': 'both'
+            });
+        });
+        
+        // Adicionar efeito de ripple ao clicar nos cards
+        $('.evento-checkbox').on('click', function() {
+            const card = $(this).find('.evento-card');
+            card.addClass('animate-pulse');
+            setTimeout(() => {
+                card.removeClass('animate-pulse');
+            }, 300);
+        });
         // Listener para atualizar preview de imagem ao digitar URL
         $('#foto-url').on('input', function() {
             const url = $(this).val().trim();
